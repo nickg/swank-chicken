@@ -12,6 +12,10 @@
 ;;; And accept the default options.
 ;;;
 
+(require 'tcp)
+(require 'posix)
+(require-extension symbol-utils)
+
 ;; When SWANK commands are evaluated the output port is bound to a special
 ;; callback that sends the strings back to SLIME for printing. This function
 ;; produces a function that when executed always uses the default output
@@ -38,10 +42,12 @@
              (string-append (make-string (- pad length) #\0)
                             base))))
 
-     (let* ((string (format "~a" msg))
-            (packet (format "~a~a"
-                            (pad-hex-string (string-length string) 6)
-                            string)))
+     (let* ((string (with-output-to-string
+                      (lambda ()
+                        (write msg))))
+            (padded (pad-hex-string (string-length string) 6))
+            (packet (string-append padded string)))
+       
        (print (format "WRITE ~a" packet))
        (display packet out)
        (flush-output out)))))
@@ -60,16 +66,22 @@
       (swank-event-loop in out)))))
 
 ;; Called when an exception is thrown while evaluating a swank:* function.
-;; TODO: we need to communicate this back to SLIME - how?
+;; TODO: send back useful values to SLIME and implement debugger
 (define swank-exception
   (swank-with-normal-output-port-lambda
-   (lambda (exn)
+   (lambda (thread jump exn)
      (let ((get-key (lambda (key)
                       ((condition-property-accessor 'exn key) exn))))
        (print (format "ERROR msg: ~a args: ~a loc ~a"
                       (get-key 'message)
                       (get-key 'arguments)
-                      (get-key 'location)))))))
+                      (get-key 'location)))
+       (jump `(:debug 0 0        ; Thread, level (dummy values)
+                      ("test" "   test" nil)  ; Condition
+                      (("yah" "yo"))          ; Restarts
+                      ((0 "foo") (1 "bar"))   ; Frames
+                      ()))))))                ; Emacs continuations
+
 
 ;; Create an output port that sends data back to SLIME to be printed on
 ;; the REPL.
@@ -91,13 +103,13 @@
                  (lambda (k)
                    (with-exception-handler
                     (lambda (exn)
-                      (swank-exception exn)
-                      (k '(:abort nil)))
+                      (swank-exception thread k exn)
+                      (k `(:return (:abort nil) ,id)))
                     (lambda ()
                       (with-output-to-port (swank-output-port out)
                         (lambda ()
-                          (list ':ok (eval sexp))))))))))
-    (swank-write-packet (list ':return result id) out)))
+                          `(:return (:ok ,(eval sexp)) ,id)))))))))
+    (swank-write-packet result out)))
 
 ;; Start up a TCP server, wait for a connection, then jump into the main
 ;; event loop. If `file' is specified it is used as a filename to write
@@ -146,11 +158,11 @@
 ;; TODO: add more (e.g. Chicken version) here
 (define (swank:connection-info)
   `(:pid ,(current-process-id)
-    :package (:name "CSI" :prompt "CSI")))
+    :package (:name CSI :prompt CSI)))
 
 ;; For us this call is fairly pointless, but it names the REPL.
 (define (swank:create-repl _)
-  (list "CSI" "CSI"))
+  '("CSI" "CSI"))
 
 ;; Evaluate the expression `sexp' and return a list of results.
 (define (swank:listener-eval sexp)
@@ -170,7 +182,7 @@
                   (eval `(begin ,@forms)))))
         (lambda results
           `(:values ,@(map (lambda (r)
-                             (format "\"~a\"" r))
+                             (format "~a" r))
                            results)))))))
 
 ;; Given a function name return a list of its arguments. This uses
@@ -186,6 +198,3 @@
 ;; Definitions required for CL compatibility.
 (define nil #f)
 (define t #t)
-
-;; A dummy variable to represent the CSI package.
-(define CSI "CSI")
