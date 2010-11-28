@@ -11,7 +11,7 @@
                     (require 'posix)
                     (require-extension symbol-utils)
                     (load ,swank) 
-                    (swank-server-start 4005, file)))))
+                    (swank-server-start 4005 ,file)))))
 
 (defun chicken-slime ()
   (interactive)
