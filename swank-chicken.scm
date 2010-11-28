@@ -88,7 +88,7 @@
 (define (swank-output-port socket)
   (make-output-port
    (lambda (str)
-     (swank-write-packet `(:write-string ,(format "~s" str))
+     (swank-write-packet `(:write-string ,(format "~a" str))
                          socket))
    void
    void))
