@@ -1,3 +1,5 @@
+;;; SWANK server
+
 (define (swank-event-loop in out)
   (let* ((length (read in))
          (request (read in)))
@@ -5,10 +7,27 @@
      ((or (eof-object? length) (eof-object? request))
       (void))
      (else
-      (print (format "~a ~a" length request))
+      (print (format "READ ~a ~a" length request))
       (case (car request)
         ((:emacs-rex) (apply swank-emacs-rex out (cdr request))))
       (swank-event-loop in out)))))
+           
+(define (swank-write-packet msg out)
+  (define (pad-hex-string n pad)
+    (let* ((base (format "~x" n))
+           (length (string-length base)))
+      (if (>= length pad)
+          base
+          (string-append (make-string (- pad length) #\0)
+                         base))))
+  
+  (let* ((string (format "~a" msg))
+         (packet (format "~a~a"
+                     (pad-hex-string (string-length string) 6)
+                     string)))
+    (print "WRITE " packet)
+    (display packet out)
+    (flush-output out)))
 
 (define (swank-exception exn)
   (let ((get-key (lambda (key)
@@ -18,17 +37,17 @@
                    (get-key 'arguments)
                    (get-key 'location)))))
   
-
 (define (swank-emacs-rex out sexp package thread id)
-  (call-with-current-continuation
-   (lambda (k)
-     (with-exception-handler
-      (lambda (exn)
-        (swank-exception exn)
-        (k exn))
-      (lambda ()
-        (eval sexp))))))
-
+  (let ((result (call-with-current-continuation
+                 (lambda (k)
+                   (with-exception-handler
+                    (lambda (exn)
+                      (swank-exception exn)
+                      (k '(:abort nil)))
+                    (lambda ()
+                      (list ':ok (eval sexp))))))))
+    (swank-write-packet (list ':return result id) out)))
+        
 (define (swank-server-start)
   (let ((listener (tcp-listen 4005)))
     (dynamic-wind
@@ -42,3 +61,6 @@
 
       (lambda ()
         (tcp-close listener)))))
+
+;;; SWANK commands
+
