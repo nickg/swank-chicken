@@ -9,6 +9,7 @@
     (format "%S\n"
             `(begin (require 'tcp)
                     (require 'posix)
+                    (require-extension symbol-utils)
                     (load ,swank) 
                     (swank-server-start 4005, file)))))
 

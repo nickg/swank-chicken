@@ -173,9 +173,19 @@
                              (format "\"~a\"" r))
                            results)))))))
 
-;; Definitions required for CL compatility
+;; Given a function name return a list of its arguments. This uses
+;; the symbol-utils extension.
+(define (swank:operator-arglist func _)
+  (let ((sym (string->symbol func)))
+    (cond
+     ((unbound? sym) 'nil)
+     ((procedure? (symbol-value sym))
+      (format "\"~a\"" (procedure-information (symbol-value sym))))
+     (else 'nil))))
+
+;; Definitions required for CL compatibility.
 (define nil #f)
 (define t #t)
 
-;; A dummy variable to represent the CSI package
+;; A dummy variable to represent the CSI package.
 (define CSI "CSI")
