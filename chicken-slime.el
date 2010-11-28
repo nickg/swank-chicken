@@ -16,4 +16,4 @@
   (interactive)
   (slime "chicken"))
 
-(provide 'slime-slime)
+(provide 'chicken-slime)
