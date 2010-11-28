@@ -176,3 +176,6 @@
 ;; Definitions required for CL compatility
 (define nil #f)
 (define t #t)
+
+;; A dummy variable to represent the CSI package
+(define CSI "CSI")
