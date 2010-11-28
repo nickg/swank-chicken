@@ -62,6 +62,8 @@
       (lambda ()
         (tcp-close listener)))))
 
+(tcp-read-timeout #f)
+
 ;;; SWANK commands
 
 (define (swank:connection-info)
