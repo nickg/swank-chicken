@@ -64,3 +64,18 @@
 
 ;;; SWANK commands
 
+(define (swank:connection-info)
+  `(:pid ,(current-process-id)
+    :package (:name "CSI" :prompt "CSI")))
+
+(define (swank:create-repl _)
+  (list "CSI" "CSI"))
+
+(define (swank:listener-eval sexp)
+  (with-input-from-string sexp
+    (lambda ()
+      `(:values ,(format "\"~a\"" (eval (read)))))))
+
+;; Definitions required for CL compatility
+(define nil #f)
+(define t #t)
