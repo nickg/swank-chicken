@@ -192,10 +192,9 @@
 (define (swank:compile-string-for-emacs str buffer position filename _)
   (let ((forms (string->forms str)))
     (for-each (lambda (form)
-                (print (format "; compiling ~s" form))
                 (eval form))
               forms)
-    `(:compilation-result nil t 0.005 nil nil)))  ; FIXME
+    `(:compilation-result nil t 0.0 nil nil)))  ; TODO: eval time
 
 ;; Given a function name return a list of its arguments. This uses
 ;; the symbol-utils extension.
