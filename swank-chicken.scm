@@ -164,26 +164,38 @@
 (define (swank:create-repl _)
   '("CSI" "CSI"))
 
-;; Evaluate the expression `sexp' and return a list of results.
-(define (swank:listener-eval sexp)
-
+;; Parse `str' into a list of forms.
+(define (string->forms str)
   (define (get-forms)
     (let ((form (read)))
       (cond
        ((eof-object? form) '())
        (else (cons form (get-forms))))))       
 
-  (with-input-from-string sexp
-    (lambda ()
-      (call-with-values
-          (lambda ()
-            (let ((forms (get-forms)))
-              (if (not (null? forms))
-                  (eval `(begin ,@forms)))))
-        (lambda results
+  (with-input-from-string str get-forms))
+
+;; Evaluate `str' as if enclosed in (begin ...) and return the results.
+(define (swank:listener-eval str)
+  (call-with-values
+      (lambda ()
+        (let ((forms (string->forms str)))
+          (if (not (null? forms))
+              (eval `(begin ,@forms)))))
+    (lambda results
           `(:values ,@(map (lambda (r)
                              (format "~a" r))
-                           results)))))))
+                           results)))))
+
+;; "Compile" a string. For us this just means eval and discard the
+;; results, the behaviour of which might be different to what SLIME
+;; or the user expected.
+(define (swank:compile-string-for-emacs str buffer position filename _)
+  (let ((forms (string->forms str)))
+    (for-each (lambda (form)
+                (print (format "; compiling ~s" form))
+                (eval form))
+              forms)
+    `(:compilation-result nil t 0.005 nil nil)))  ; FIXME
 
 ;; Given a function name return a list of its arguments. This uses
 ;; the symbol-utils extension.
