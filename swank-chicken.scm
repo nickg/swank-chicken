@@ -82,7 +82,6 @@
                       ((0 "foo") (1 "bar"))   ; Frames
                       ()))))))                ; Emacs continuations
 
-
 ;; Create an output port that sends data back to SLIME to be printed on
 ;; the REPL.
 (define (swank-output-port socket)
@@ -108,7 +107,7 @@
                     (lambda ()
                       (with-output-to-port (swank-output-port out)
                         (lambda ()
-                          `(:return (:ok ,(eval sexp)) ,id)))))))))
+                          `(:return ,(eval sexp) ,id)))))))))
     (swank-write-packet result out)))
 
 ;; Start up a TCP server, wait for a connection, then jump into the main
@@ -157,12 +156,12 @@
 ;; Lisp process.
 ;; TODO: add more (e.g. Chicken version) here
 (define (swank:connection-info)
-  `(:pid ,(current-process-id)
-    :package (:name CSI :prompt CSI)))
+  `(:ok (:pid ,(current-process-id)
+         :package (:name CSI :prompt CSI))))
 
 ;; For us this call is fairly pointless, but it names the REPL.
 (define (swank:create-repl _)
-  '("CSI" "CSI"))
+  '(:ok ("CSI" "CSI")))
 
 ;; Parse `str' into a list of forms.
 (define (string->forms str)
@@ -182,9 +181,9 @@
           (if (not (null? forms))
               (eval `(begin ,@forms)))))
     (lambda results
-          `(:values ,@(map (lambda (r)
-                             (format "~a" r))
-                           results)))))
+          `(:ok (:values ,@(map (lambda (r)
+                                  (format "~a" r))
+                                results))))))
 
 ;; "Compile" a string. For us this just means eval and discard the
 ;; results, the behaviour of which might be different to what SLIME
@@ -194,17 +193,22 @@
     (for-each (lambda (form)
                 (eval form))
               forms)
-    `(:compilation-result nil t 0.0 nil nil)))  ; TODO: eval time
+    `(:ok (:compilation-result nil t 0.0 nil nil))))  ; TODO: eval time
 
 ;; Given a function name return a list of its arguments. This uses
 ;; the symbol-utils extension.
 (define (swank:operator-arglist func _)
-  (let ((sym (string->symbol func)))
-    (cond
-     ((unbound? sym) 'nil)
-     ((procedure? (symbol-value sym))
-      (format "\"~a\"" (procedure-information (symbol-value sym))))
-     (else 'nil))))
+  `(:ok ,(let ((sym (string->symbol func)))
+           (cond
+            ((unbound? sym) 'nil)
+            ((procedure? (symbol-value sym))
+             (format "\"~a\"" (procedure-information (symbol-value sym))))
+            (else 'nil)))))
+
+;; TODO: figure out the exact semantics of this
+(define (swank:throw-to-toplevel)
+  (assert swank-error-cc)
+  (swank-error-cc `(:abort "NIL")))
 
 ;; Definitions required for CL compatibility.
 (define nil #f)
