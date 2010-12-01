@@ -68,29 +68,27 @@
 
 ;; Called when an exception is thrown while evaluating a swank:* function.
 ;; TODO: send back useful values to SLIME and implement debugger
-(define swank-exception
-  (swank-with-normal-output-port-lambda
-   (lambda (in out id exn)
-     (let ((get-key (lambda (key)
-                      ((condition-property-accessor 'exn key) exn))))
-       (print (format "ERROR msg: ~a args: ~a loc ~a"
-                      (get-key 'message)
-                      (get-key 'arguments)
-                      (get-key 'location)))
-       (swank-write-packet
-        `(:debug 0 0        ; Thread, level (dummy values)
-                 ("test" "   test" nil)  ; Condition
-                 (("yah" "yo"))          ; Restarts
-                 ((0 "foo") (1 "bar"))   ; Frames
-                 (,id))                  ; Emacs continuations
-        out)
-       (dynamic-wind
-         (lambda ()
-           (swank-write-packet '(:debug-activate 0 0 nil) out))
-         (lambda ()
-           (swank-event-loop in out))
-         (lambda ()
-           (swank-write-packet '(:debug-return 0 0 nil) out)))))))
+(define (swank-exception in out id exn)
+  (let ((get-key (lambda (key)
+                   ((condition-property-accessor 'exn key) exn))))
+    (print (format "ERROR msg: ~a args: ~a loc ~a"
+                   (get-key 'message)
+                   (get-key 'arguments)
+                   (get-key 'location)))
+    (swank-write-packet
+     `(:debug 0 0        ; Thread, level (dummy values)
+              ("test" "   test" nil)  ; Condition
+              (("yah" "yo"))          ; Restarts
+              ((0 "foo") (1 "bar"))   ; Frames
+              (,id))                  ; Emacs continuations
+     out)
+    (dynamic-wind
+      (lambda ()
+        (swank-write-packet '(:debug-activate 0 0 nil) out))
+      (lambda ()
+        (swank-event-loop in out))
+      (lambda ()
+        (swank-write-packet '(:debug-return 0 0 nil) out)))))
 
 ;; Create an output port that sends data back to SLIME to be printed on
 ;; the REPL.
