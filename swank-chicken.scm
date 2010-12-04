@@ -66,22 +66,48 @@
         ((:emacs-rex) (apply swank-emacs-rex in out (cdr request))))
       (swank-event-loop in out)))))
 
+;; Concatenate all elements of a list together into a string.
+(define (format-list items)
+  (string-concatenate (map (lambda (item) (format "~a " item)) items)))
+
+;; Format the call chain for output by SLIME.
+(define (swank-call-chain start)
+  (define (frame-string f)
+    (format "~a ~a ~s"
+            (vector-ref f 0)
+            (vector-ref f 1)
+            (vector-ref f 2)))
+  
+  (define (loop n frames)
+    (cond
+     ((null? frames) '())
+     (else (cons (list n (frame-string (car frames)))
+                 (loop (add1 n) (cdr frames))))))
+
+  (loop 0 (drop (reverse (get-call-chain)) (+ start 4))))
+
 ;; Called when an exception is thrown while evaluating a swank:* function.
-;; TODO: send back useful values to SLIME and implement debugger
-(define (swank-exception in out id exn)
+(define (swank-exception in out id exn chain)
   (let ((get-key (lambda (key)
                    ((condition-property-accessor 'exn key) exn))))
     (print (format "ERROR msg: ~a args: ~a loc ~a"
                    (get-key 'message)
                    (get-key 'arguments)
                    (get-key 'location)))
-    (swank-write-packet
-     `(:debug 0 0        ; Thread, level (dummy values)
-              ("test" "   test" nil)  ; Condition
-              (("yah" "yo"))          ; Restarts
-              ((0 "foo") (1 "bar"))   ; Frames
-              (,id))                  ; Emacs continuations
-     out)
+    (let ((first-line (format "Error: ~a: ~a"
+                              (get-key 'message)
+                              (format-list (get-key 'arguments))))
+          (second-line (cond
+                        ((get-key 'location) => (lambda (l)
+                                                  (format "  ~a" l)))
+                        (else ""))))
+      (swank-write-packet
+       `(:debug 0 0        ; Thread, level (dummy values)
+                (,first-line ,second-line nil)            ; Condition
+                (("ABORT" "Return to SLIME's top level")) ; Restarts
+                ,chain     ; Frames
+                (,id))     ; Emacs continuations
+       out))
     (dynamic-wind
       (lambda ()
         (swank-write-packet '(:debug-activate 0 0 nil) out))
@@ -126,7 +152,7 @@
                          (eval-or-condition sexp)))))
           (cond
            ((condition? thing)
-            (swank-exception in out id thing))
+            (swank-exception in out id thing (swank-call-chain 3)))
            (else
             (set! result `(:return ,thing ,id))))))                 
 
