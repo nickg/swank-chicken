@@ -71,7 +71,7 @@
   (string-concatenate (map (lambda (item) (format "~a " item)) items)))
 
 ;; Format the call chain for output by SLIME.
-(define (swank-call-chain start)
+(define (swank-call-chain chain)
   (define (frame-string f)
     (format "~a ~a ~s"
             (vector-ref f 0)
@@ -84,7 +84,7 @@
      (else (cons (list n (frame-string (car frames)))
                  (loop (add1 n) (cdr frames))))))
 
-  (loop 0 (drop (reverse (get-call-chain)) (+ start 4))))
+  (loop 0 (drop (reverse chain) 1)))
 
 ;; Called when an exception is thrown while evaluating a swank:* function.
 (define (swank-exception in out id exn chain)
@@ -105,7 +105,7 @@
        `(:debug 0 0        ; Thread, level (dummy values)
                 (,first-line ,second-line nil)            ; Condition
                 (("ABORT" "Return to SLIME's top level")) ; Restarts
-                ,chain     ; Frames
+                ,(swank-call-chain chain)                 ; Frames
                 (,id))     ; Emacs continuations
        out))
     (dynamic-wind
@@ -126,15 +126,17 @@
    void
    void))
 
-;; Evaluate an S-expression and return either the result or a condition
-;; object if an exception was thrown.
+;; Evaluate an S-expression and returns a pair (condition . trace) if an
+;; exception is raised or (#t . value) on success.
 (define (eval-or-condition sexp)
   (call-with-current-continuation
    (lambda (skip)
      (with-exception-handler
-      skip
+      (lambda (exn)
+        (let ((chain (get-call-chain)))
+          (skip (cons exn chain))))
       (lambda ()
-        (eval sexp))))))
+        (cons #t (eval sexp)))))))
 
 ;; The only SWANK command we handle at the moment. Argument is an expression
 ;; to be evaluated, which should be a call to a swank:* function. Any output
@@ -151,10 +153,10 @@
                        (lambda ()
                          (eval-or-condition sexp)))))
           (cond
-           ((condition? thing)
-            (swank-exception in out id thing (swank-call-chain 3)))
+           ((condition? (car thing))
+            (swank-exception in out id (car thing) (cdr thing)))
            (else
-            (set! result `(:return ,thing ,id))))))                 
+            (set! result `(:return ,(cdr thing) ,id))))))
 
       ;; Output is always written when unwinding the stack to ensure we
       ;; reply to every message e.g. when escaping via continuation to
