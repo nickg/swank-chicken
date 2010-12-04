@@ -213,10 +213,11 @@
 
 ;; Called at startup to determine various information about the inferior
 ;; Lisp process.
-;; TODO: add more (e.g. Chicken version) here
 (define (swank:connection-info)
   `(:ok (:pid ,(current-process-id)
-         :package (:name CSI :prompt CSI))))
+         :package (:name CSI :prompt CSI)
+         :lisp-implementation 
+         (:type "Chicken Scheme" :version ,(chicken-version)))))
 
 ;; For us this call is fairly pointless, but it names the REPL.
 (define (swank:create-repl _)
