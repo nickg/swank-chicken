@@ -262,7 +262,7 @@
            (cond
             ((unbound? sym) 'nil)
             ((procedure? (symbol-value sym))
-             (format "\"~a\"" (procedure-information (symbol-value sym))))
+             (format "~a" (procedure-information (symbol-value sym))))
             (else 'nil)))))
 
 ;; Immediately return from all nested debugging sessions back to
