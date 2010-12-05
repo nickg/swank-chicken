@@ -276,6 +276,17 @@
 (define (swank:throw-to-toplevel)
   (*top-level* (void)))
 
+;; Invoke the given debug restart. We only support one restart at
+;; the moment which jumps back to the top level.
+(define (swank:invoke-nth-restart-for-emacs _ _)
+  (*top-level* (void)))
+
+;; Return the backtrace frames between `start' and `end'.
+;; TODO: currently does nothing as we only seem to get eight stack
+;; frames from get-call-chain.
+(define (swank:backtrace start end)
+  '(:ok nil))
+
 ;; Definitions required for CL compatibility.
 (define nil #f)
 (define t #t)
