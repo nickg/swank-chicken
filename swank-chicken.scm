@@ -70,10 +70,6 @@
         ((:emacs-rex) (apply swank-emacs-rex in out (cdr request))))
       (swank-event-loop in out)))))
 
-;; Concatenate all elements of a list together into a string.
-(define (format-list items)
-  (string-concatenate (map (lambda (item) (format "~a " item)) items)))
-
 ;; Format the call chain for output by SLIME.
 (define (swank-call-chain chain)
   (define (frame-string f)
@@ -92,6 +88,9 @@
 
 ;; Called when an exception is thrown while evaluating a swank:* function.
 (define (swank-exception in out id exn chain)
+  (define (format-list items)
+    (string-concatenate (map (lambda (item) (format "~a " item)) items)))
+  
   (let ((get-key (lambda (key)
                    ((condition-property-accessor 'exn key) exn))))
     (print (format "ERROR msg: ~a args: ~a loc ~a"
@@ -132,7 +131,7 @@
 
 ;; Evaluate an S-expression and returns a pair (condition . trace) if an
 ;; exception is raised or (#t . value) on success.
-(define (eval-or-condition sexp)
+(define (swank-eval-or-condition sexp)
   (call-with-current-continuation
    (lambda (skip)
      (with-exception-handler
@@ -155,7 +154,7 @@
       (lambda ()
         (let ((thing (with-output-to-port (swank-output-port out)
                        (lambda ()
-                         (eval-or-condition sexp)))))
+                         (swank-eval-or-condition sexp)))))
           (cond
            ((condition? (car thing))
             (swank-exception in out id (car thing) (cdr thing)))
@@ -170,7 +169,7 @@
 
 ;; The top level continuation. By invoking this we can jump out of the
 ;; debugger and get back to the REPL.
-(define *top-level* #f)
+(define *swank-top-level* #f)
 
 ;; Start up a TCP server, wait for a connection, then jump into the main
 ;; event loop. If `file' is specified it is used as a filename to write
@@ -196,7 +195,7 @@
             (lambda () (tcp-accept listener))
           (lambda (in out)
             (call/cc (lambda (hop)
-                       (set! *top-level* hop)))
+                       (set! *swank-top-level* hop)))
             ;; Whenever we escape from the debugger we'll end up here
             (swank-event-loop in out))))
       
@@ -274,12 +273,12 @@
 ;; Immediately return from all nested debugging sessions back to
 ;; the top level.
 (define (swank:throw-to-toplevel)
-  (*top-level* (void)))
+  (*swank-top-level* (void)))
 
 ;; Invoke the given debug restart. We only support one restart at
 ;; the moment which jumps back to the top level.
 (define (swank:invoke-nth-restart-for-emacs _ _)
-  (*top-level* (void)))
+  (*swank-top-level* (void)))
 
 ;; Return the backtrace frames between `start' and `end'.
 ;; TODO: currently does nothing as we only seem to get eight stack
