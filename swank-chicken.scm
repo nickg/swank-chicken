@@ -47,9 +47,13 @@
                         (write msg))))
             (padded (pad-hex-string (string-length string) 6))
             (packet (string-append padded string)))
+
+       ;; This may be called by code that has set print-length-limit so we
+       ;; have to use this kludge to avoid truncating the packet.
+       (##sys#with-print-length-limit #f (lambda ()
+                                           (print (format "WRITE ~a" packet))
+                                           (display packet out)))
        
-       (print (format "WRITE ~a" packet))
-       (display packet out)
        (flush-output out)))))
 
 ;; Tail-recursive loop to read commands from SWANK socket and dispatch them.
