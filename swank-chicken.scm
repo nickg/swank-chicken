@@ -286,6 +286,11 @@
 (define (swank:backtrace start end)
   '(:ok nil))
 
+;; Load the specified file.
+(define (swank:load-file file)
+  (load file)
+  `(:ok t))
+
 ;; Definitions required for CL compatibility.
 (define nil #f)
 (define t #t)
