@@ -38,7 +38,8 @@
 
 (require 'tcp)
 (require 'posix)
-(require-extension symbol-utils)
+(require-extension symbol-utils
+                   format)
 
 ;; When SWANK commands are evaluated the output port is bound to a special
 ;; callback that sends the strings back to SLIME for printing. This function
@@ -97,10 +98,10 @@
 ;; Format the call chain for output by SLIME.
 (define (swank-call-chain chain)
   (define (frame-string f)
-    (format "~a ~a ~s"
+    (format "~a ~16@a ~s"
             (vector-ref f 0)
-            (vector-ref f 1)
-            (vector-ref f 2)))
+            (format "[~a]" (vector-ref f 2))
+            (vector-ref f 1)))
   
   (define (loop n frames)
     (cond
@@ -121,16 +122,13 @@
                    (get-key 'message)
                    (get-key 'arguments)
                    (get-key 'location)))
-    (let ((first-line (format "Error: ~a: ~a"
+    (let ((first-line (format "Error: (~a) ~a: ~a"
+                              (or (get-key 'location) "")
                               (get-key 'message)
-                              (format-list (get-key 'arguments))))
-          (second-line (cond
-                        ((get-key 'location) => (lambda (l)
-                                                  (format "  ~a" l)))
-                        (else ""))))
+                              (format-list (get-key 'arguments)))))
       (swank-write-packet
        `(:debug 0 0        ; Thread, level (dummy values)
-                (,first-line ,second-line nil)            ; Condition
+                (,first-line "" nil)                      ; Condition
                 (("ABORT" "Return to SLIME's top level")) ; Restarts
                 ,(swank-call-chain chain)                 ; Frames
                 (,id))     ; Emacs continuations
