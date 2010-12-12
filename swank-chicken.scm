@@ -297,7 +297,7 @@
               (eval `(begin ,@forms)))))
     (lambda results
           `(:ok (:values ,@(map (lambda (r)
-                                  (format "~a" r))
+                                  (format "~s" r))
                                 results))))))
 
 ;; "Compile" a string. For us this just means eval and discard the
