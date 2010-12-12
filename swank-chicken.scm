@@ -41,65 +41,55 @@
 (require-extension symbol-utils
                    format)
 
-;; When SWANK commands are evaluated the output port is bound to a special
-;; callback that sends the strings back to SLIME for printing. This function
-;; produces a function that when executed always uses the default output
-;; port. This means we can print debug messages to stdout rather than
-;; sending them back to SLIME. Any function that can be called from a
-;; swank:* function should be wrapped in this.
-(define swank-with-normal-output-port-lambda
+;; Safe printing routine that always uses the server's standard output.
+(define debug-print
   (let ((normal-port (current-output-port)))
-    (lambda (func)
-      (lambda args
-        (with-output-to-port normal-port
-          (lambda ()
-            (apply func args)))))))
+    (lambda args
+      (with-output-to-port normal-port
+        (lambda ()
+          (apply print args))))))
 
 ;; Send list `msg' as a reply back to SLIME.
-(define swank-write-packet
-  (swank-with-normal-output-port-lambda
-   (lambda (msg out)
-     (define (pad-hex-string n pad)
-       (let* ((base (format "~x" n))
-              (length (string-length base)))
-         (if (>= length pad)
-             base
-             (string-append (make-string (- pad length) #\0)
-                            base))))
+(define (swank-write-packet msg out)
+  (define (pad-hex-string n pad)
+    (let* ((base (format "~x" n))
+           (length (string-length base)))
+      (if (>= length pad)
+          base
+          (string-append (make-string (- pad length) #\0)
+                         base))))
 
-     (let* ((string (with-output-to-string
-                      (lambda ()
-                        (write msg))))
-            (padded (pad-hex-string (string-length string) 6))
-            (packet (string-append padded string)))
+  (let* ((string (with-output-to-string
+                   (lambda ()
+                     (write msg))))
+         (padded (pad-hex-string (string-length string) 6))
+         (packet (string-append padded string)))
 
-       ;; This may be called by code that has set print-length-limit so we
-       ;; have to use this kludge to avoid truncating the packet.
-       (##sys#with-print-length-limit #f (lambda ()
-                                           (print (format "WRITE ~a" packet))
-                                           (display packet out)))
+    ;; This may be called by code that has set print-length-limit so we
+    ;; have to use this kludge to avoid truncating the packet.
+    (##sys#with-print-length-limit #f (lambda ()
+                                        (debug-print (format "WRITE ~a" packet))
+                                        (display packet out)))
        
-       (flush-output out)))))
+    (flush-output out)))
 
 ;; Tail-recursive loop to read commands from SWANK socket and dispatch them.
 ;; Several calls to this may be active at once e.g. when using the debugger.
-(define swank-event-loop
-  (swank-with-normal-output-port-lambda
-   (lambda (in out)
-     (let* ((length (read in))
-            (request (read in)))
-       (cond
-        ((or (eof-object? length) (eof-object? request))
-         (void))
-        (else
-         (print (format "READ ~a ~a" length request))
-         (case (car request)
-           ((:emacs-rex)
-            (begin
-              (apply swank-emacs-rex in out (cdr request))
-              (swank-event-loop in out)))
-           ((:emacs-return-string)
-            (cadddr request)))))))))
+(define (swank-event-loop in out)
+  (let* ((length (read in))
+         (request (read in)))
+    (cond
+     ((or (eof-object? length) (eof-object? request))
+      (void))
+     (else
+      (debug-print (format "READ ~a ~a" length request))
+      (case (car request)
+        ((:emacs-rex)
+         (begin
+           (apply swank-emacs-rex in out (cdr request))
+           (swank-event-loop in out)))
+        ((:emacs-return-string)
+         (cadddr request)))))))
 
 ;; Format the call chain for output by SLIME.
 (define (swank-call-chain chain)
@@ -124,7 +114,7 @@
   
   (let ((get-key (lambda (key)
                    ((condition-property-accessor 'exn key) exn))))
-    (print (format "ERROR msg: ~a args: ~a loc ~a"
+    (debug-print (format "ERROR msg: ~a args: ~a loc ~a"
                    (get-key 'message)
                    (get-key 'arguments)
                    (get-key 'location)))
