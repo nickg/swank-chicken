@@ -1,0 +1,27 @@
+A SWANK server for Chicken Scheme. 
+
+See http://www.doof.me.uk/2010/12/12/using-slime-with-chicken-scheme/ for more
+details.
+
+Quickstart:
+
+1) chicken-install format symbol-utils
+
+2) Add chicken-slime.el to your Emacs load-path
+
+3) Add the following to your .emacs
+
+(autoload 'chicken-slime "chicken-slime" "SWANK backend for Chicken" t)
+(setq swank-chicken-path "/path/to/swank-chicken.scm")
+
+(add-hook 'scheme-mode-hook
+          (lambda ()
+            (slime-mode t)))
+
+4) Start a SLIME REPL with
+
+M-x chicken-slime
+
+--
+
+Report all bugs, etc. to nick AT nickg DOT me DOT uk.
