@@ -3,9 +3,11 @@
                       :init chicken-slime-init)
             slime-lisp-implementations))
 
+(defvar swank-chicken-path "/path/to/swank-chicken.scm")
+
 (defun chicken-slime-init (file _)
   (setq slime-protocol-version 'ignore)
-  (let ((swank "/home/nick/swank-chicken/swank-chicken.scm"))
+  (let ((swank swank-chicken-path))
     (format "%S\n"
             `(begin (load ,swank) 
                     (swank-server-start 4005 ,file)))))
