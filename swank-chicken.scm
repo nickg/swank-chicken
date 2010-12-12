@@ -83,17 +83,23 @@
 
 ;; Tail-recursive loop to read commands from SWANK socket and dispatch them.
 ;; Several calls to this may be active at once e.g. when using the debugger.
-(define (swank-event-loop in out)
-  (let* ((length (read in))
-         (request (read in)))
-    (cond
-     ((or (eof-object? length) (eof-object? request))
-      (void))
-     (else
-      (print (format "READ ~a ~a" length request))
-      (case (car request)
-        ((:emacs-rex) (apply swank-emacs-rex in out (cdr request))))
-      (swank-event-loop in out)))))
+(define swank-event-loop
+  (swank-with-normal-output-port-lambda
+   (lambda (in out)
+     (let* ((length (read in))
+            (request (read in)))
+       (cond
+        ((or (eof-object? length) (eof-object? request))
+         (void))
+        (else
+         (print (format "READ ~a ~a" length request))
+         (case (car request)
+           ((:emacs-rex)
+            (begin
+              (apply swank-emacs-rex in out (cdr request))
+              (swank-event-loop in out)))
+           ((:emacs-return-string)
+            (cadddr request)))))))))
 
 ;; Format the call chain for output by SLIME.
 (define (swank-call-chain chain)
@@ -143,13 +149,38 @@
 
 ;; Create an output port that sends data back to SLIME to be printed on
 ;; the REPL.
-(define (swank-output-port socket)
+(define (swank-output-port out)
   (make-output-port
    (lambda (str)
      (swank-write-packet `(:write-string ,(format "~a" str))
-                         socket))
+                         out))
    void
    void))
+
+;; Create an input port that reads data by calling back into Emacs.
+(define (swank-input-port in out) 
+  (let ((buffer #f))
+    (define (read-callback)
+      (if buffer
+          (let ((char (read-char buffer)))
+            (if (eof-object? char)
+                (begin
+                  (set! buffer #f)
+                  (read-callback))
+                char))
+          (begin
+            (swank-write-packet '(:read-string 0 1) out)
+            (let ((result (swank-event-loop in out)))
+              (if (string? result)
+                  (begin
+                    (set! buffer
+                          (with-input-from-string result current-input-port))
+                    (read-callback))
+                  #!eof)))))
+
+    (define (ready-callback) buffer)
+    
+    (make-input-port read-callback ready-callback void)))
 
 ;; Evaluate an S-expression and returns a pair (condition . trace) if an
 ;; exception is raised or (#t . value) on success.
@@ -176,7 +207,9 @@
       (lambda ()
         (let ((thing (with-output-to-port (swank-output-port out)
                        (lambda ()
-                         (swank-eval-or-condition sexp)))))
+                         (with-input-from-port (swank-input-port in out)
+                           (lambda ()
+                             (swank-eval-or-condition sexp)))))))
           (cond
            ((condition? (car thing))
             (swank-exception in out id (car thing) (cdr thing)))
