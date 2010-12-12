@@ -291,6 +291,11 @@
   (load file)
   `(:ok t))
 
+;; Unimplemented.
+(define (swank:buffer-first-change . _) '(:ok nil))
+(define (swank:filename-to-modulename . _) '(:ok nil))
+(define (swank:find-definitions-for-emacs . _) '(:ok nil))
+
 ;; Definitions required for CL compatibility.
 (define nil #f)
 (define t #t)
