@@ -94,9 +94,11 @@
 ;; Format the call chain for output by SLIME.
 (define (swank-call-chain chain)
   (define (frame-string f)
-    (format "~a ~16@a ~s"
+    (format "~8a ~16@a ~s"
             (vector-ref f 0)
-            (format "[~a]" (vector-ref f 2))
+            (cond
+             ((vector-ref f 2) => (lambda (str) (format "[~a]" str)))
+             (else ""))
             (vector-ref f 1)))
   
   (define (loop n frames)
@@ -118,8 +120,11 @@
                    (get-key 'message)
                    (get-key 'arguments)
                    (get-key 'location)))
-    (let ((first-line (format "Error: (~a) ~a: ~a"
-                              (or (get-key 'location) "")
+    (let ((first-line (format "Error: ~a~a: ~a"
+                              (cond
+                               ((get-key 'location) => (lambda (l)
+                                                         (format "(~a) " l)))
+                               (else ""))
                               (get-key 'message)
                               (format-list (get-key 'arguments)))))
       (swank-write-packet
