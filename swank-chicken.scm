@@ -406,12 +406,14 @@
 
 ;; Return a list of all symbols that start with `prefix'.
 (define (swank:simple-completions prefix _)
-  `(:ok (,(filter (lambda (str)
-                    (string-prefix? prefix str))
-                  (map (lambda (info)
-                         (symbol->string (car info)))
-                       (apropos-information-list prefix)))
-         ,prefix)))
+  (let ((comps (filter (lambda (str)
+                         (string-prefix? prefix str))
+                       (map (lambda (info)
+                              (symbol->string (car info)))
+                            (apropos-information-list prefix)))))
+  `(:ok (,comps ,(if (= (length comps) 1)
+                     (car comps)
+                     prefix)))))         
 
 ;; Unimplemented.
 (define (swank:buffer-first-change . _) '(:ok nil))
