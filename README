@@ -5,11 +5,14 @@ details.
 
 Quickstart:
 
-1) chicken-install format symbol-utils
+1) chicken-install fmt symbol-utils apropos
 
 2) Add chicken-slime.el to your Emacs load-path
 
 3) Add the following to your .emacs
+
+(slime-setup '(slime-fancy slime-banner))   ; If you don't use SLIME already
+                       ; Refer to the SLIME manual for setup instructions
 
 (autoload 'chicken-slime "chicken-slime" "SWANK backend for Chicken" t)
 (setq swank-chicken-path "/path/to/swank-chicken.scm")
