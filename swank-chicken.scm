@@ -324,6 +324,10 @@
 
 (define swank:interactive-eval-region swank:interactive-eval)
 
+;; Evaluate an expression and pretty-print the result.
+(define (swank:pprint-eval str)
+  `(:ok ,(fmt #f (pretty (eval `(begin ,@(string->forms str)))))))
+
 ;; Given a function name return a list of its arguments. This uses
 ;; the symbol-utils extension.
 (define (swank:operator-arglist func _)
@@ -426,4 +430,3 @@
 (define t #t)
 
 (define :print-right-margin 'print-right-margin)
- 
