@@ -47,7 +47,8 @@
     (lambda args
       (with-output-to-port normal-port
         (lambda ()
-          (apply print args))))))
+          (apply print args)))
+      (flush-output normal-port))))
 
 ;; Send list `msg' as a reply back to SLIME.
 (define (swank-write-packet msg out)
@@ -341,6 +342,55 @@
   (load file)
   `(:ok t))
 
+;; A more advanced version of swank:operator-arglist which highlights
+;; the the current cursor position in the argument list.
+(define (swank:autodoc forms . args)
+
+  (define (find-cursor thing)
+    (cond
+     ((and (list? thing)
+           (memq 'swank::%cursor-marker% thing))
+      thing)
+     ((list? thing)
+      (let loop ((elems thing))
+        (if (null? elems)
+            #f
+            (or (find-cursor (car elems))
+                (loop (cdr elems))))))
+     (else #f)))
+  
+  (define (highlight-arg info args)
+    (cond
+     ((null? info) '())
+     ((null? args) info)
+     ((not (pair? info))  ; Variable length argument list
+      (list '===> info '<===))  
+     ((eq? (car args) 'swank::%cursor-marker%)
+      (append (list '===> (car info) '<===)
+              (cdr info)))
+     ((string=? (car args) "")
+      (highlight-arg info (cdr args)))
+     (else (cons (car info)
+                 (highlight-arg (cdr info) (cdr args))))))
+  
+  (define (info sym)
+    (cond
+     ((unbound? sym) #f)
+     ((procedure? (symbol-value sym))
+      (let ((pi (procedure-information (symbol-value sym))))
+        (if (pair? pi)
+            pi
+            `(,pi . args))))
+     (else #f)))
+  
+  (let ((where (find-cursor forms)))
+    (if (and where (string? (car where)))
+        (let ((i (info (string->symbol (car where)))))
+          (if i
+              `(:ok ,(format "~a" (highlight-arg i where)))
+              `(:ok :not-available)))
+        '(:ok :not-available))))
+
 ;; Unimplemented.
 (define (swank:buffer-first-change . _) '(:ok nil))
 (define (swank:filename-to-modulename . _) '(:ok nil))
@@ -350,3 +400,6 @@
 ;; Definitions required for CL compatibility.
 (define nil #f)
 (define t #t)
+
+(define :print-right-margin 'print-right-margin)
+ 
