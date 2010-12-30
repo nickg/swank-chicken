@@ -305,9 +305,9 @@
 (define (swank:interactive-eval str)
   (let* ((forms (string->forms str))
          (result (if (not (null? forms))
-                     (eval `(begin ,@forms))
+                     (fmt #f "=> " (eval `(begin ,@forms)))
                      "; No value")))
-    `(:ok ,(fmt #f "=> " result))))
+    `(:ok ,result)))
 
 (define swank:interactive-eval-region swank:interactive-eval)
 
