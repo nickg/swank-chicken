@@ -241,7 +241,17 @@
             (call/cc (lambda (hop)
                        (set! *swank-top-level* hop)))
             ;; Whenever we escape from the debugger we'll end up here
-            (swank-event-loop in out))))
+
+            (let ((orig-handler (current-exception-handler)))
+              (with-exception-handler
+               (lambda (exn)
+                 (cond
+                  (((condition-predicate 'user-interrupt) exn)
+                   (*swank-top-level* (void)))
+                  (else 
+                   (orig-handler exn))))
+               (lambda ()
+                 (swank-event-loop in out)))))))
       
       (lambda ()
         (tcp-close listener)))))
