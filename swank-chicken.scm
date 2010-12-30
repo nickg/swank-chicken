@@ -301,6 +301,16 @@
               forms)
     `(:ok (:compilation-result nil t 0.0 nil nil))))  ; TODO: eval time
 
+;; Evaluate an expression and return a result for the minibuffer.
+(define (swank:interactive-eval str)
+  (let* ((forms (string->forms str))
+         (result (if (not (null? forms))
+                     (eval `(begin ,@forms))
+                     "; No value")))
+    `(:ok ,(fmt #f "=> " result))))
+
+(define swank:interactive-eval-region swank:interactive-eval)
+
 ;; Given a function name return a list of its arguments. This uses
 ;; the symbol-utils extension.
 (define (swank:operator-arglist func _)
