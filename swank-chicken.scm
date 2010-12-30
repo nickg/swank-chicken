@@ -117,7 +117,7 @@
                                ((get-key 'location) => (lambda (l)
                                                          (fmt #f "(" l ")")))
                                (else ""))
-                              (get-key 'message)
+                              " " (get-key 'message)
                               ": " (fmt-join dsp (get-key 'arguments) " "))))
       (swank-write-packet
        `(:debug 0 0        ; Thread, level (dummy values)
