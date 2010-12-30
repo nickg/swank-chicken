@@ -369,7 +369,7 @@
      ((eq? (car args) 'swank::%cursor-marker%)
       (append (list '===> (car info) '<===)
               (cdr info)))
-     ((string=? (car args) "")
+     ((and (string? (car args)) (string=? (car args) ""))
       (highlight-arg info (cdr args)))
      (else (cons (car info)
                  (highlight-arg (cdr info) (cdr args))))))
