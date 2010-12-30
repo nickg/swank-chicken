@@ -7,6 +7,7 @@
 
 (defun chicken-slime-init (file _)
   (setq slime-protocol-version 'ignore)
+  (setq slime-complete-symbol-function 'slime-simple-complete-symbol)
   (let ((swank swank-chicken-path))
     (format "%S\n"
             `(begin (load ,swank) 

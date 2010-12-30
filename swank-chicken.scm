@@ -39,6 +39,7 @@
 (require 'tcp)
 (require 'posix)
 (require-extension symbol-utils
+                   apropos
                    fmt)
 
 ;; Safe printing routine that always uses the server's standard output.
@@ -390,6 +391,15 @@
               `(:ok ,(fmt #f (highlight-arg i where)))
               `(:ok :not-available)))
         '(:ok :not-available))))
+
+;; Return a list of all symbols that start with `prefix'.
+(define (swank:simple-completions prefix _)
+  `(:ok (,(filter (lambda (str)
+                    (string-prefix? prefix str))
+                  (map (lambda (info)
+                         (symbol->string (car info)))
+                       (apropos-information-list prefix)))
+         ,prefix)))
 
 ;; Unimplemented.
 (define (swank:buffer-first-change . _) '(:ok nil))
