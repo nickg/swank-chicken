@@ -198,11 +198,13 @@
                            (lambda ()
                              (swank-eval-or-condition sexp)))))))
           (cond
-           ((condition? (car thing))
+           ((not (condition? (car thing)))
+            (set! result `(:return ,(cdr thing) ,id)))
+           (((condition-predicate 'exn) (car thing))
             (swank-exception in out id (car thing) (cdr thing)))
-           (else
-            (set! result `(:return ,(cdr thing) ,id))))))
-
+           (((condition-predicate 'user-interrupt) (car thing))
+            (set! result `(:return (:abort user-interrupt) ,id))))))
+           
       ;; Output is always written when unwinding the stack to ensure we
       ;; reply to every message e.g. when escaping via continuation to
       ;; the top level after exiting the debugger.
