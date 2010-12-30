@@ -39,7 +39,7 @@
 (require 'tcp)
 (require 'posix)
 (require-extension symbol-utils
-                   format)
+                   fmt)
 
 ;; Safe printing routine that always uses the server's standard output.
 (define debug-print
@@ -52,24 +52,17 @@
 
 ;; Send list `msg' as a reply back to SLIME.
 (define (swank-write-packet msg out)
-  (define (pad-hex-string n pad)
-    (let* ((base (format "~x" n))
-           (length (string-length base)))
-      (if (>= length pad)
-          base
-          (string-append (make-string (- pad length) #\0)
-                         base))))
-
   (let* ((string (with-output-to-string
                    (lambda ()
                      (write msg))))
-         (padded (pad-hex-string (string-length string) 6))
-         (packet (string-append padded string)))
-
+         (pad-hex (lambda (n)
+                    (pad-char #\0 (pad/left 6 (num n 16)))))
+         (packet (fmt #f (pad-hex (string-length string)) string)))
+                      
     ;; This may be called by code that has set print-length-limit so we
     ;; have to use this kludge to avoid truncating the packet.
     (##sys#with-print-length-limit #f (lambda ()
-                                        (debug-print (format "WRITE ~a" packet))
+                                        (debug-print (fmt #f "WRITE " (wrt packet)))
                                         (display packet out)))
        
     (flush-output out)))
@@ -83,7 +76,7 @@
      ((or (eof-object? length) (eof-object? request))
       (void))
      (else
-      (debug-print (format "READ ~a ~a" length request))
+      (debug-print (fmt #f "READ " (wrt length) (wrt request)))
       (case (car request)
         ((:emacs-rex)
          (begin
@@ -95,12 +88,13 @@
 ;; Format the call chain for output by SLIME.
 (define (swank-call-chain chain)
   (define (frame-string f)
-    (format "~8a ~16@a ~s"
-            (vector-ref f 0)
-            (cond
-             ((vector-ref f 2) => (lambda (str) (format "[~a]" str)))
-             (else ""))
-            (vector-ref f 1)))
+    (fmt #f (pad 9 (dsp (vector-ref f 0)))
+         (pad 16 (dsp (cond
+                       ((vector-ref f 2) => (lambda (where)
+                                              (fmt #f "[" where "]")))
+                       (else ""))))
+         " "
+         (dsp (vector-ref f 1))))
   
   (define (loop n frames)
     (cond
@@ -112,22 +106,18 @@
 
 ;; Called when an exception is thrown while evaluating a swank:* function.
 (define (swank-exception in out id exn chain)
-  (define (format-list items)
-    (string-concatenate (map (lambda (item) (format "~a " item)) items)))
-  
   (let ((get-key (lambda (key)
                    ((condition-property-accessor 'exn key) exn))))
-    (debug-print (format "ERROR msg: ~a args: ~a loc ~a"
-                   (get-key 'message)
-                   (get-key 'arguments)
-                   (get-key 'location)))
-    (let ((first-line (format "Error: ~a~a: ~a"
+    (debug-print (fmt #f "ERROR msg: " (get-key 'message)
+                      " args: " (get-key 'arguments)
+                      " loc " (get-key 'location)))
+    (let ((first-line (fmt #f "Error: "
                               (cond
                                ((get-key 'location) => (lambda (l)
-                                                         (format "(~a) " l)))
+                                                         (fmt #f "(" l ")")))
                                (else ""))
                               (get-key 'message)
-                              (format-list (get-key 'arguments)))))
+                              ": " (fmt-join dsp (get-key 'arguments) " "))))
       (swank-write-packet
        `(:debug 0 0        ; Thread, level (dummy values)
                 (,first-line "" nil)                      ; Condition
@@ -148,7 +138,7 @@
 (define (swank-output-port out)
   (make-output-port
    (lambda (str)
-     (swank-write-packet `(:write-string ,(format "~a" str))
+     (swank-write-packet `(:write-string ,(fmt #f str))
                          out))
    void
    void))
@@ -298,7 +288,7 @@
               (eval `(begin ,@forms)))))
     (lambda results
           `(:ok (:values ,@(map (lambda (r)
-                                  (format "~s" r))
+                                  (fmt #f (wrt r)))
                                 results))))))
 
 ;; "Compile" a string. For us this just means eval and discard the
@@ -318,7 +308,7 @@
            (cond
             ((unbound? sym) 'nil)
             ((procedure? (symbol-value sym))
-             (format "~a" (procedure-information (symbol-value sym))))
+             (fmt #f (procedure-information (symbol-value sym))))
             (else 'nil)))))
 
 ;; Immediately return from all nested debugging sessions back to
@@ -387,7 +377,7 @@
     (if (and where (string? (car where)))
         (let ((i (info (string->symbol (car where)))))
           (if i
-              `(:ok ,(format "~a" (highlight-arg i where)))
+              `(:ok ,(fmt #f (highlight-arg i where)))
               `(:ok :not-available)))
         '(:ok :not-available))))
 
