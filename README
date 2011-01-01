@@ -15,7 +15,7 @@ Quickstart:
                        ; Refer to the SLIME manual for setup instructions
 
 (autoload 'chicken-slime "chicken-slime" "SWANK backend for Chicken" t)
-(setq swank-chicken-path "/path/to/swank-chicken.scm")
+(setq swank-chicken-path "/path/to/swank.scm")
 
 (add-hook 'scheme-mode-hook
           (lambda ()
