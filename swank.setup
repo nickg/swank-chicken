@@ -1,13 +1,14 @@
 ;;; -*- mode: scheme -*-
 
 (compile -s -O2 -d1 swank.scm -j swank)
+(compile -s swank.import.scm -O2 -d0)
 (compile -c -O2 -d1 swank.scm -unit swank -j swank)
 
 (install-extension
   ; Name of your extension:
   'swank
   ; Files to install for your extension:
-  '("swank.o" "swank.so" "chicken-slime.el")
+  '("swank.o" "swank.so" "swank.import.so" "chicken-slime.el")
   ; Assoc list with properties for your extension:
   '((version 0.2)
     (static "swank.o"))) ;; for static linking
