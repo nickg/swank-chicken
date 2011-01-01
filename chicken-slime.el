@@ -3,7 +3,7 @@
                       :init chicken-slime-init)
             slime-lisp-implementations))
 
-(defvar swank-chicken-path "/path/to/swank-chicken.scm")
+(defvar swank-chicken-path "/path/to/swank.scm")
 
 (defun chicken-slime-init (file _)
   (setq slime-protocol-version 'ignore)
