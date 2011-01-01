@@ -1,0 +1,14 @@
+;;; -*- mode: scheme -*-
+
+((license "MIT")
+
+ (category tools)
+
+ (needs symbol-utils
+        apropos
+        fmt)
+                    
+ (test-depends test)
+
+ (author "Nick Gasson")
+ (synopsis "SWANK server providing basic SLIME support."))
