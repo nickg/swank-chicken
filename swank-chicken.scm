@@ -115,10 +115,10 @@
     (let ((first-line (fmt #f "Error: "
                               (cond
                                ((get-key 'location) => (lambda (l)
-                                                         (fmt #f "(" l ")")))
+                                                         (fmt #f "(" l ") ")))
                                (else ""))
-                              " " (get-key 'message)
-                              ": " (fmt-join dsp (get-key 'arguments) " "))))
+                              (get-key 'message)
+                              ": " (fmt-join wrt (get-key 'arguments) " "))))
       (swank-write-packet
        `(:debug 0 0        ; Thread, level (dummy values)
                 (,first-line "" nil)                      ; Condition
