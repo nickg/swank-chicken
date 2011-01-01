@@ -68,6 +68,27 @@
        
     (flush-output out)))
 
+;; Replace Common Lisp-isms such as :foo, nil, and t with (quote foo),
+;; (quote ()), and #t respectively.
+(define (swank-cleanup sexp)
+  (define (cleanup-symbol sym)
+    (let ((sym-str (symbol->string sym)))
+      (cond
+       ((eq? (string-ref sym-str 0) #\:)
+        `(quote ,(string->symbol (substring sym-str 1))))
+       ((eq? sym 'nil)
+        '(quote ()))
+       ((eq? sym 't)
+        #t)
+       (else sym))))
+  
+  (cond
+   ((list? sexp)
+    (map swank-cleanup sexp))
+   ((symbol? sexp)
+    (cleanup-symbol sexp))
+   (else sexp)))
+
 ;; Tail-recursive loop to read commands from SWANK socket and dispatch them.
 ;; Several calls to this may be active at once e.g. when using the debugger.
 (define (swank-event-loop in out)
@@ -81,7 +102,7 @@
       (case (car request)
         ((:emacs-rex)
          (begin
-           (apply swank-emacs-rex in out (cdr request))
+           (apply swank-emacs-rex in out (swank-cleanup (cdr request)))
            (swank-event-loop in out)))
         ((:emacs-return-string)
          (cadddr request)))))))
@@ -424,9 +445,3 @@
 (define (swank:filename-to-modulename . _) '(:ok nil))
 (define (swank:find-definitions-for-emacs . _) '(:ok nil))
 (define (swank:swank-require . _) '(:ok nil))
-
-;; Definitions required for CL compatibility.
-(define nil #f)
-(define t #t)
-
-(define :print-right-margin 'print-right-margin)
