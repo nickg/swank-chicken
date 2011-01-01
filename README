@@ -1,7 +1,9 @@
 A SWANK server for Chicken Scheme. 
 
-See http://www.doof.me.uk/2010/12/12/using-slime-with-chicken-scheme/ for more
-details.
+See:
+  http://www.doof.me.uk/2010/12/12/using-slime-with-chicken-scheme/ 
+  http://www.doof.me.uk/2011/01/01/update-to-chicken-swank-server/
+for more details.
 
 Quickstart:
 
