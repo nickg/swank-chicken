@@ -446,6 +446,25 @@
            (lambda ()
              (doc-dwim sym)))))
 
+(define (swank:describe-definition-for-emacs sym type)
+  (swank:describe-symbol sym))
+
+(define (swank:apropos-list-for-emacs str . _)
+  (define (slime-node-type node)
+    (case (node-type node)
+      ((procedure) ':function)
+      ((read syntax) ':macro)
+      ((setter) ':setf)
+      ((class) ':class)
+      ((method) ':generic-function)
+      ((egg) ':egg)   ; Not visible
+      (else ':variable)))
+  
+  `(:ok ,(map (lambda (node)
+                (list ':designator (fmt #f (node-id node))
+                      (slime-node-type node) (node-signature node)))
+              (match-nodes (irregex str)))))
+
 ;; Unimplemented.
 (define (swank:buffer-first-change . _) '(:ok nil))
 (define (swank:filename-to-modulename . _) '(:ok nil))
