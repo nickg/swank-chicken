@@ -19,7 +19,8 @@
                swank:filename-to-modulename
                swank:find-definitions-for-emacs
                swank:swank-require
-               swank:describe-symbol)
+               swank:describe-symbol
+               swank:apropos-list-for-emacs)
   (import scheme
           chicken)
   (use ports
