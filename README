@@ -3,6 +3,7 @@ A SWANK server for Chicken Scheme.
 See:
   http://www.doof.me.uk/2010/12/12/using-slime-with-chicken-scheme/ 
   http://www.doof.me.uk/2011/01/01/update-to-chicken-swank-server/
+  http://www.doof.me.uk/2011/01/02/chicken-slime-describe-and-apropos/
 for more details.
 
 Quickstart:
@@ -26,6 +27,9 @@ Quickstart:
 4) Start a SLIME REPL with
 
 M-x chicken-slime
+
+Note for the describe and apropos commands to work you must install a 
+local copy of the Chicken documentation.
 
 --
 
