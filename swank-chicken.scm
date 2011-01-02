@@ -24,6 +24,7 @@
 (require 'posix)
 (require-extension symbol-utils
                    apropos
+                   chicken-doc
                    fmt)
 
 
@@ -438,7 +439,12 @@
                             (apropos-information-list prefix)))))
   `(:ok (,comps ,(if (= (length comps) 1)
                      (car comps)
-                     prefix)))))         
+                     prefix)))))
+
+(define (swank:describe-symbol sym)
+  `(:ok ,(with-output-to-string
+           (lambda ()
+             (doc-dwim sym)))))
 
 ;; Unimplemented.
 (define (swank:buffer-first-change . _) '(:ok nil))

@@ -18,7 +18,8 @@
                swank:buffer-first-change
                swank:filename-to-modulename
                swank:find-definitions-for-emacs
-               swank:swank-require)
+               swank:swank-require
+               swank:describe-symbol)
   (import scheme
           chicken)
   (use ports

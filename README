@@ -7,7 +7,7 @@ for more details.
 
 Quickstart:
 
-1) chicken-install fmt symbol-utils apropos
+1) chicken-install fmt symbol-utils apropos chicken-doc
 
 2) Add chicken-slime.el to your Emacs load-path
 
