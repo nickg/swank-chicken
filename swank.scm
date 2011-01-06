@@ -30,5 +30,6 @@
        srfi-13
        symbol-utils
        apropos
+       irregex
        fmt)
   (include "swank-chicken.scm"))

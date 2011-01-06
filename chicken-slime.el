@@ -1,5 +1,5 @@
 (setq slime-lisp-implementations
-      (cons '(chicken ("csi")
+      (cons '(chicken ("/usr/local/bin/csi")
                       :init chicken-slime-init)
             slime-lisp-implementations))
 

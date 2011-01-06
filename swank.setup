@@ -8,7 +8,8 @@
   ; Name of your extension:
   'swank
   ; Files to install for your extension:
-  '("swank.o" "swank.so" "swank.import.so" "chicken-slime.el")
+  '("swank.o" "swank.so" "swank.import.so"
+    "chicken-slime.el" "swank-chicken.scm")
   ; Assoc list with properties for your extension:
   '((version 0.2)
     (static "swank.o"))) ;; for static linking
