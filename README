@@ -20,6 +20,9 @@ Quickstart:
 (autoload 'chicken-slime "chicken-slime" "SWANK backend for Chicken" t)
 (setq swank-chicken-path "/path/to/swank-chicken.scm")
 
+;; If your csi executable is in a non-standard location
+(setq slime-csi-path "/path/to/csi")
+
 (add-hook 'scheme-mode-hook
           (lambda ()
             (slime-mode t)))

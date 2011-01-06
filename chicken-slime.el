@@ -1,5 +1,8 @@
+(defvar slime-csi-path "csi"
+  "Path to csi executable for with Chicken SLIME.")
+
 (setq slime-lisp-implementations
-      (cons '(chicken ("/usr/local/bin/csi")
+      (cons `(chicken (,slime-csi-path)
                       :init chicken-slime-init)
             slime-lisp-implementations))
 
