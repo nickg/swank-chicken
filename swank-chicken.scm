@@ -130,7 +130,7 @@
 ;; Called when an exception is thrown while evaluating a swank:* function.
 (define (swank-exception in out id exn chain)
   (let ((get-key (lambda (key)
-                   ((condition-property-accessor 'exn key) exn))))
+                   ((condition-property-accessor 'exn key '()) exn))))
     (debug-print (fmt #f "ERROR msg: " (get-key 'message)
                       " args: " (get-key 'arguments)
                       " loc " (get-key 'location)))
