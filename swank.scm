@@ -22,7 +22,7 @@
                swank:describe-symbol
                swank:apropos-list-for-emacs)
   (import scheme
-          chicken)
+          chicken irregex)
   (use ports
        tcp
        posix
@@ -30,6 +30,5 @@
        srfi-13
        symbol-utils
        apropos
-       irregex
        fmt)
   (include "swank-chicken.scm"))
