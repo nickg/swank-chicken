@@ -389,7 +389,6 @@
 	 (data (##sys#slot callframe 2))
 	 (frameinfo (##sys#structure? data 'frameinfo))
 	 (counter (if frameinfo (##sys#slot frameinfo 1) data)))
-    (debug-print (fmt #f "frame info called form: " form " data :" data " frameinfo: " frameinfo))
     (when frameinfo
 	  (debug-print (fmt #f
 			    "slot 0: " (##sys#slot data 0)
@@ -397,24 +396,26 @@
 			    " slot 2: " (##sys#slot data 2)
 			    " slot 3: " (##sys#slot data 3))))
     (if frameinfo
-	(let ((ev-list (map
-			(lambda (e v)
-			  (debug-print (fmt #f "E: " e " v: " v))
-			  (do ((i 0 (+ i 1))
-			       (be e (cdr be))
-			       (res '(nil)))
-			      ((null? be) res)
-			    (debug-print (fmt #f "List: " (list ':name (car be)
-								':id i
-								':value (##sys#slot v i))))
-			    (set! res (cons (list ':name (symbol->string (car be))
-						  ':id i
-						  ':value (->string (##sys#slot v i)))
-					    res))))
-			(##sys#slot data 2)
-			(##sys#slot data 3))))
-	  (if (null? ev-list) '(nil) ev-list))
-	'(nil))))
+	(let ((ev-list (fold append '()
+			     (map
+			      (lambda (e v)
+				(debug-print (fmt #f "E: " e " v: " v))
+				(do ((i 0 (+ i 1))
+				     (be e (cdr be))
+				     (res '()))
+				    ((null? be) res)
+				  (debug-print (fmt #f "List: " (list ':name (car be)
+								      ':id i
+								      ':value (##sys#slot v i))
+						    " res: " res))
+				  (set! res (cons (list ':name (symbol->string (car be))
+							':id i
+							':value (->string (##sys#slot v i)))
+						  res))))
+			      (##sys#slot data 2)
+			      (##sys#slot data 3)))))
+	  (if (null? ev-list) 'nil ev-list))
+	'nil)))
 
 (define (swank:frame-locals-and-catch-tags n . _)
   (let ((cc *recent-call-chain*))
@@ -423,7 +424,7 @@
     (if (and cc
 	     (>= n 0)
 	     (< n (length cc)))
-	`(:ok (,@(frame-info (list-ref cc n)) nil))
+	`(:ok (,(frame-info (list-ref cc n)) nil))
 	'(:ok (nil nil)))))
 
 ;; Return the backtrace frames between `start' and `end'.
