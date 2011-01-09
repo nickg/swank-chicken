@@ -116,11 +116,11 @@
 (define (swank-call-chain chain)
   (define (frame-string f)
     (fmt #f (pad 9 (dsp (vector-ref f 0)))
-         (pad 13 (dsp (cond
-                       ((##sys#structure? (vector-ref f 2) 'frameinfo) "[ frameinfo ]")
+         (pad 11 (dsp (cond
+                       ((##sys#structure? (vector-ref f 2) 'frameinfo) "[ more... ]")
                        (else ""))))
          " "
-         (dsp (vector-ref f 1))))
+         (dsp (or (vector-ref f 1) ""))))
   
   (define (loop n frames)
     (cond
