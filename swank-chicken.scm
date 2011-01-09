@@ -22,7 +22,8 @@
 
 (require 'tcp)
 (require 'posix)
-(require-extension symbol-utils
+(require-extension data-structures
+		   symbol-utils
                    apropos
                    chicken-doc
                    fmt)
@@ -108,13 +109,15 @@
         ((:emacs-return-string)
          (cadddr request)))))))
 
+;; Store the callchain away for later inspection
+(define *recent-call-chain* #f)
+
 ;; Format the call chain for output by SLIME.
 (define (swank-call-chain chain)
   (define (frame-string f)
     (fmt #f (pad 9 (dsp (vector-ref f 0)))
-         (pad 16 (dsp (cond
-                       ((vector-ref f 2) => (lambda (where)
-                                              (fmt #f "[" where "]")))
+         (pad 13 (dsp (cond
+                       ((##sys#structure? (vector-ref f 2) 'frameinfo) "[ frameinfo ]")
                        (else ""))))
          " "
          (dsp (vector-ref f 1))))
@@ -124,13 +127,12 @@
      ((null? frames) '())
      (else (cons (list n (frame-string (car frames)))
                  (loop (add1 n) (cdr frames))))))
-
-  (loop 0 (drop (reverse chain) 1)))
+  (loop 0 (reverse chain)))
 
 ;; Called when an exception is thrown while evaluating a swank:* function.
 (define (swank-exception in out id exn chain)
   (let ((get-key (lambda (key)
-                   ((condition-property-accessor 'exn key) exn))))
+                   ((condition-property-accessor 'exn key '()) exn))))
     (debug-print (fmt #f "ERROR msg: " (get-key 'message)
                       " args: " (get-key 'arguments)
                       " loc " (get-key 'location)))
@@ -198,7 +200,13 @@
    (lambda (skip)
      (with-exception-handler
       (lambda (exn)
-        (let ((chain (get-call-chain)))
+        (let ((chain (or
+		      ((condition-property-accessor
+			'exn
+			'call-chain
+			#f) exn)
+		      (get-call-chain))))
+	  (set! *recent-call-chain* (reverse chain))
           (skip (cons exn chain))))
       (lambda ()
         (cons #t (eval sexp)))))))
@@ -369,6 +377,53 @@
 ;; the moment which jumps back to the top level.
 (define (swank:invoke-nth-restart-for-emacs _ _)
   (*swank-top-level* (void)))
+
+;; Return the local variables for frame n
+;(:ok (((:name "SB-DEBUG::ARG-0" 
+;            :id 0 :value "(ERROR \"foo\")") 
+;            (:name "SB-DEBUG::ARG-1" :id 0 
+;            :value "#<NULL-LEXENV>")) nil))
+
+(define (frame-info callframe)
+  (let* ((form (##sys#slot callframe 1))
+	 (data (##sys#slot callframe 2))
+	 (frameinfo (##sys#structure? data 'frameinfo))
+	 (counter (if frameinfo (##sys#slot frameinfo 1) data)))
+    (debug-print (fmt #f "frame info called form: " form " data :" data " frameinfo: " frameinfo))
+    (when frameinfo
+	  (debug-print (fmt #f
+			    "slot 0: " (##sys#slot data 0)
+			    " slot 1: " (##sys#slot data 1)
+			    " slot 2: " (##sys#slot data 2)
+			    " slot 3: " (##sys#slot data 3))))
+    (if frameinfo
+	(map
+	 (lambda (e v)
+	   (debug-print (fmt #f "E: " e " v: " v))
+	   (do ((i 0 (+ i 1))
+		(be e (cdr be))
+		(res '()))
+	       ((null? be) res)
+	     (debug-print (fmt #f "List: " (list ':name (car be)
+			       ':id i
+			       ':value (##sys#slot v i))))
+	     (set! res (cons (list ':name (symbol->string (car be))
+			       ':id i
+			       ':value (->string (##sys#slot v i)))
+			     res))))
+	 (##sys#slot data 2)
+	 (##sys#slot data 3))
+	'(()))))
+
+(define (swank:frame-locals-and-catch-tags n . _)
+  (let ((cc *recent-call-chain*))
+    (debug-print (fmt #f "Frame " n ": " (list-ref cc n)))
+    (debug-print (fmt #f "call chain length " (length cc)))
+    (if (and cc
+	     (>= n 0)
+	     (< n (length cc)))
+	`(:ok (,@(frame-info (list-ref cc n)) nil))
+	'(:ok (nil nil)))))
 
 ;; Return the backtrace frames between `start' and `end'.
 ;; TODO: currently does nothing as we only seem to get eight stack
