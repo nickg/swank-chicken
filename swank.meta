@@ -6,6 +6,7 @@
 
  (needs symbol-utils
         apropos
+	chicken-doc
         fmt)
                     
  (test-depends test)
