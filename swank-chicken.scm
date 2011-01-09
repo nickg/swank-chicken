@@ -397,23 +397,24 @@
 			    " slot 2: " (##sys#slot data 2)
 			    " slot 3: " (##sys#slot data 3))))
     (if frameinfo
-	(map
-	 (lambda (e v)
-	   (debug-print (fmt #f "E: " e " v: " v))
-	   (do ((i 0 (+ i 1))
-		(be e (cdr be))
-		(res '()))
-	       ((null? be) res)
-	     (debug-print (fmt #f "List: " (list ':name (car be)
-			       ':id i
-			       ':value (##sys#slot v i))))
-	     (set! res (cons (list ':name (symbol->string (car be))
-			       ':id i
-			       ':value (->string (##sys#slot v i)))
-			     res))))
-	 (##sys#slot data 2)
-	 (##sys#slot data 3))
-	'(()))))
+	(let ((ev-list (map
+			(lambda (e v)
+			  (debug-print (fmt #f "E: " e " v: " v))
+			  (do ((i 0 (+ i 1))
+			       (be e (cdr be))
+			       (res '(nil)))
+			      ((null? be) res)
+			    (debug-print (fmt #f "List: " (list ':name (car be)
+								':id i
+								':value (##sys#slot v i))))
+			    (set! res (cons (list ':name (symbol->string (car be))
+						  ':id i
+						  ':value (->string (##sys#slot v i)))
+					    res))))
+			(##sys#slot data 2)
+			(##sys#slot data 3))))
+	  (if (null? ev-list) '(nil) ev-list))
+	'(nil))))
 
 (define (swank:frame-locals-and-catch-tags n . _)
   (let ((cc *recent-call-chain*))
