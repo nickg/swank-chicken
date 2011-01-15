@@ -13,9 +13,10 @@ Quickstart:
 2) Run chicken-install in the directory where you cloned the repository: this 
    will install the `slime' extension.
 
-2) Add chicken-slime.el to your Emacs load-path
+3) Add the Chicken extensions directory to your Emacs load-path. Typically this 
+   will be /usr/local/lib/chicken/5/
 
-3) Add the following to your .emacs
+4) Add the following to your .emacs
 
 (slime-setup '(slime-fancy slime-banner))   ; If you don't use SLIME already
                        ; Refer to the SLIME manual for setup instructions
@@ -29,7 +30,7 @@ Quickstart:
           (lambda ()
             (slime-mode t)))
 
-4) Start a SLIME REPL with
+5) Start a SLIME REPL with
 
 M-x chicken-slime
 
