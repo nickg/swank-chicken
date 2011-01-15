@@ -1,4 +1,4 @@
-(module swank (swank-server-start
+(module slime (swank-server-start
                swank:connection-info
                swank:swank-require
                swank:autodoc

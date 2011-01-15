@@ -16,7 +16,7 @@
   (format "%S\n"
           `(begin ,(if swank-chicken-path
                        `(load ,swank-chicken-path)   ; Interpet code for testing
-                     '(require-extension swank))     ; Normal use
+                     '(require-extension slime))     ; Normal use
                   (swank-server-start 4005 ,file))))
 
 (defun chicken-slime ()
