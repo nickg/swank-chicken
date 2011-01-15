@@ -10,6 +10,9 @@ Quickstart:
 
 1) chicken-install fmt symbol-utils apropos chicken-doc
 
+2) Run chicken-install in the directory where you cloned the repository: this 
+   will install the `slime' extension.
+
 2) Add chicken-slime.el to your Emacs load-path
 
 3) Add the following to your .emacs
@@ -18,7 +21,6 @@ Quickstart:
                        ; Refer to the SLIME manual for setup instructions
 
 (autoload 'chicken-slime "chicken-slime" "SWANK backend for Chicken" t)
-(setq swank-chicken-path "/path/to/swank-chicken.scm")
 
 ;; If your csi executable is in a non-standard location
 (setq slime-csi-path "/path/to/csi")
@@ -33,6 +35,14 @@ M-x chicken-slime
 
 Note for the describe and apropos commands to work you must install a 
 local copy of the Chicken documentation.
+
+If you want to hack on the SWANK server set the following variable:
+
+(setq swank-chicken-path "/path/to/swank-chicken.scm")
+
+This will interpret the code rather than loading the extension. Note 
+there is currently a bug in the interpreted version which causes a 
+SEGV when viewing local variables in a call frame.
 
 --
 
