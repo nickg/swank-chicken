@@ -19,13 +19,14 @@
 ;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ;;; DEALINGS IN THE SOFTWARE.
 ;;;
-
+(import chicken scheme)
 (require 'tcp)
 (require 'posix)
 (require-extension data-structures
 		   symbol-utils
                    apropos
                    chicken-doc
+		   extras
                    fmt)
 
 
@@ -145,7 +146,7 @@
                               ": " (fmt-join wrt (get-key 'arguments) " "))))
       (swank-write-packet
        `(:debug 0 0        ; Thread, level (dummy values)
-                (,first-line "" nil)                      ; Condition
+                (,first-line "[ inspect ]" nil) ; Condition
                 (("ABORT" "Return to SLIME's top level")) ; Restarts
                 ,(swank-call-chain chain)                 ; Frames
                 (,id))     ; Emacs continuations
@@ -406,6 +407,21 @@
 	  (if (null? ev-list) 'nil ev-list))
 	'nil)))
 
+
+(define (get-local frame index)
+  (and-let* ((vars (frame-info frame))
+	     (frame (and (> (length vars) index)
+			 (list-ref vars index))))
+    (fprintf (current-error-port) "~a -> ~a~%~!" vars frame)
+     frame))
+
+(define (variable-from-callchain frame-idx var-idx)
+  (and-let* ((chain *recent-call-chain*)
+	     (frame (and (> (length chain) frame-idx)
+			 (list-ref chain frame-idx))))
+	    (get-local frame var-idx)))
+
+
 (define (swank:frame-locals-and-catch-tags n . _)
   (let ((cc *recent-call-chain*))
     (if (and cc
@@ -509,8 +525,35 @@
                       (slime-node-type node) (node-signature node)))
               (match-nodes (irregex str)))))
 
+
+(define (swank:inspect-frame-var frame index)
+;; an answer seems to be 
+;; (:ok (:id number :title "variable-name"
+;;       :content (( "type" (:value variable-value id))) begin end length))
+;; whereas begin and end are used to display a chunk out of a longer list of things
+;; the id in variable value can be used to further inquire a value
+;; The return of variable form callchain is (:name name :id id :value)
+;; TODO: Use csi's describe function for the content part
+  (and-let* ((var (variable-from-callchain frame index))
+	     (name (second var))
+	     (id (fourth var))
+	     (value (sixth var))
+	     (value-len (or 
+			 (and (list? value) (length value))
+			 1)))
+	    `(:ok (:id 0 
+		   :title ,(->string name)
+		   :content (("unknown type? " (:value ,(->string value) 1)) 0 0 ,value-len)))))
+
+(define (swank:quit-inspector)
+  '(:ok nil))
+
 ;; Unimplemented.
 (define (swank:buffer-first-change . _) '(:ok nil))
 (define (swank:filename-to-modulename . _) '(:ok nil))
 (define (swank:find-definitions-for-emacs . _) '(:ok nil))
 (define (swank:swank-require . _) '(:ok nil))
+
+
+
+
