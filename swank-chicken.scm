@@ -503,6 +503,8 @@
            (lambda ()
              (doc-dwim sym)))))
 
+(define swank:documentation-symbol swank:describe-symbol)
+
 (define (swank:describe-definition-for-emacs sym type)
   (swank:describe-symbol sym))
 

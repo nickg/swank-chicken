@@ -20,6 +20,7 @@
                swank:find-definitions-for-emacs
                swank:swank-require
                swank:describe-symbol
+               swank:documentation-symbol
 	       swank:frame-locals-and-catch-tags
                swank:apropos-list-for-emacs)
   (import scheme
