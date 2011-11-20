@@ -21,6 +21,6 @@
 
 (defun chicken-slime ()
   (interactive)
-  (slime "chicken"))
+  (slime 'chicken))
 
 (provide 'chicken-slime)
