@@ -486,9 +486,9 @@
     (if (and where (string? (car where)))
         (let ((i (info (string->symbol (car where)))))
           (if i
-              `(:ok ,(fmt #f (highlight-arg i where)))
-              `(:ok :not-available)))
-        '(:ok :not-available))))
+              `(:ok (,(fmt #f (highlight-arg i where)) t))
+              `(:ok (:not-available t))))
+        '(:ok (:not-available t)))))
 
 ;; Return a list of all symbols that start with `prefix'.
 (define (swank:simple-completions prefix _)
