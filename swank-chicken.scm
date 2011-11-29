@@ -27,7 +27,8 @@
                    apropos
                    chicken-doc
 		   extras
-                   fmt)
+                   fmt
+                   srfi-14)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -471,20 +472,52 @@
       (highlight-arg info (cdr args)))
      (else (cons (car info)
                  (highlight-arg (cdr info) (cdr args))))))
+
+  (define (symbol-procedure? sym)
+    (handle-exceptions exn #f (procedure? (eval sym))))
   
   (define (info sym)
     (cond
      ((unbound? sym) #f)
-     ((procedure? (symbol-value sym))
+     ((symbol-procedure? sym)
       (let ((pi (procedure-information (symbol-value sym))))
         (if (pair? pi)
             pi
             `(,pi . args))))
      (else #f)))
-  
+
+  ;; Choose a doc-node from all matches, this is only a heuristic solution.
+  ;; The heuristic is to find the doc node that has the same name as the symbol,
+  ;; and the module name is listed in ##sys#module-table. If there are multiple
+  ;; such nodes, choose the first one.
+  ;;
+  (define (guess-doc-node doc-nodes)
+    (case (length doc-nodes)
+      ((0) #f)
+      ;; ((1) (car doc-nodes))
+      (else (any (lambda (n) (and (assoc (car (chicken-doc#node-path n))
+                                         ##sys#module-table)
+                                  n))
+                 doc-nodes))))
+
+  (define (signature-from-doc sym)
+    (cond ((eq? sym 'define) ))
+    (if (or (##sys#macro? sym) (symbol-procedure? sym))
+        (let* ((doc-nodes (match-nodes sym))
+               (guessed-doc-node (guess-doc-node doc-nodes)))
+          (cond
+           ((null? doc-nodes) #f)
+           (guessed-doc-node
+            (car (string->forms
+                  (string-delete (char-set #\[ #\])
+                                 (chicken-doc#node-signature guessed-doc-node)))))
+           (else #f)))
+        #f))
+
   (let ((where (find-cursor forms)))
     (if (and where (string? (car where)))
-        (let ((i (info (string->symbol (car where)))))
+        (let* ((sym (string->symbol (car where)))
+               (i (or (signature-from-doc sym) (info sym))))
           (if i
               `(:ok (,(fmt #f (highlight-arg i where)) t))
               `(:ok (:not-available t))))
