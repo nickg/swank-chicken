@@ -307,6 +307,7 @@
 (define (swank:connection-info)
   `(:ok (:pid ,(current-process-id)
          :package (:name CSI :prompt CSI)
+         :encoding (:coding-systems (,swank:coding-system))
          :lisp-implementation 
          (:type "Chicken Scheme" :version ,(chicken-version)))))
 
@@ -582,6 +583,8 @@
 
 (define (swank:quit-inspector)
   '(:ok nil))
+
+(define swank:coding-system "utf-8-unix")
 
 ;; Unimplemented.
 (define (swank:buffer-first-change . _) '(:ok nil))
