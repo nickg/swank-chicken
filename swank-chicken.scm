@@ -312,7 +312,7 @@
          (:type "Chicken Scheme" :version ,(chicken-version)))))
 
 ;; For us this call is fairly pointless, but it names the REPL.
-(define (swank:create-repl _)
+(define (swank:create-repl . _)
   '(:ok ("CSI" "CSI")))
 
 ;; Parse `str' into a list of forms.
