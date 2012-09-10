@@ -21,10 +21,12 @@
                swank:swank-require
                swank:describe-symbol
                swank:documentation-symbol
-	       swank:inspect-frame-var
-	       swank:quit-inspector
-	       swank:frame-locals-and-catch-tags
-               swank:apropos-list-for-emacs)
+               swank:inspect-frame-var
+               swank:quit-inspector
+               swank:frame-locals-and-catch-tags
+               swank:apropos-list-for-emacs
+               swank:set-default-directory
+               swank:default-directory)
   (import scheme
           chicken irregex)
   (use ports

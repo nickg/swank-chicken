@@ -586,6 +586,14 @@
 
 (define swank:coding-system "utf-8-unix")
 
+
+(define (swank:default-directory)
+  `(:ok ,(current-directory)))
+
+(define (swank:set-default-directory sym)
+  `(:ok ,(current-directory sym)))
+
+
 ;; Unimplemented.
 (define (swank:buffer-first-change . _) '(:ok nil))
 (define (swank:filename-to-modulename . _) '(:ok nil))
