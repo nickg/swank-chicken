@@ -26,6 +26,9 @@ Quickstart:
 ;; If your csi executable is in a non-standard location
 (setq slime-csi-path "/path/to/csi")
 
+;; If you want to specify a port to run SWANK on (default is 4005)
+(setq swank-chicken-port 4015)
+
 (add-hook 'scheme-mode-hook
           (lambda ()
             (slime-mode t)))
