@@ -9,9 +9,8 @@
 (defvar swank-chicken-path nil
   "Path to swank-chicken.scm. Set to nil to use installed extension.")
 
-(defvar swank-chicken-port nil
+(defvar swank-chicken-port 4005
   "Port to use for communicating to the swank server.")
-(setq swank-chicken-port 4005)
 
 (defun chicken-slime-init (file _)
   (setq slime-protocol-version 'ignore)
