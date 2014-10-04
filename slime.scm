@@ -26,7 +26,8 @@
                swank:frame-locals-and-catch-tags
                swank:apropos-list-for-emacs
                swank:set-default-directory
-               swank:default-directory)
+               swank:default-directory
+               swank:init-presentations)
   (import scheme
           chicken irregex)
   (use ports

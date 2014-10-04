@@ -599,7 +599,7 @@
 (define (swank:filename-to-modulename . _) '(:ok nil))
 (define (swank:find-definitions-for-emacs . _) '(:ok nil))
 (define (swank:swank-require . _) '(:ok nil))
-
+(define (swank:init-presentations . _) '(:ok nil))
 
 
 
