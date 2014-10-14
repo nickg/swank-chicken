@@ -315,6 +315,8 @@
 (define (swank:create-repl . _)
   '(:ok ("CSI" "CSI")))
 
+(define swank-repl:create-repl swank:create-repl)
+
 ;; Parse `str' into a list of forms.
 (define (string->forms str)
   (define (get-forms)
@@ -336,6 +338,8 @@
           `(:ok (:values ,@(map (lambda (r)
                                   (fmt #f (wrt r)))
                                 results))))))
+
+(define swank-repl:listener-eval swank:listener-eval)
 
 ;; "Compile" a string. For us this just means eval and discard the
 ;; results, the behaviour of which might be different to what SLIME

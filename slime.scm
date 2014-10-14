@@ -3,7 +3,9 @@
                swank:swank-require
                swank:autodoc
                swank:create-repl
+               swank-repl:create-repl
                swank:listener-eval
+               swank-repl:listener-eval
                swank:compile-string-for-emacs
                swank:interactive-eval
                swank:interactive-eval-region
