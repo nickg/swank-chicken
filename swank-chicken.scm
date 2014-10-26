@@ -557,7 +557,7 @@
       ((setter) ':setf)
       ((class) ':class)
       ((method) ':generic-function)
-      ((egg) ':egg)   ; Not visible
+      ;((egg) ':egg)   ; Not visible
       (else ':variable)))
   
   `(:ok ,(map (lambda (node)
