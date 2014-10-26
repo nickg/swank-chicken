@@ -7,7 +7,8 @@
  (needs symbol-utils
         apropos
 	chicken-doc
-        fmt)
+        fmt
+	trace)
                     
  (test-depends test)
 

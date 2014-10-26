@@ -11,5 +11,5 @@
   '("slime.o" "slime.so" "slime.import.so"
     "chicken-slime.el")
   ; Assoc list with properties for your extension:
-  '((version 0.1)
+  '((version 0.2)
     (static "slime.o"))) ;; for static linking
