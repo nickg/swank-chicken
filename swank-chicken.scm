@@ -28,7 +28,8 @@
                    chicken-doc
 		   extras
                    fmt
-                   srfi-14)
+                   srfi-14
+		   trace)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -557,7 +558,7 @@
       ((setter) ':setf)
       ((class) ':class)
       ((method) ':generic-function)
-      ((egg) ':egg)   ; Not visible
+      ;((egg) ':egg)   ; Not visible
       (else ':variable)))
   
   `(:ok ,(map (lambda (node)
@@ -606,4 +607,52 @@
 (define (swank:init-presentations . _) '(:ok nil))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Trace
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; (:ok "DEFUN is now traced for trace dialog")
+; (:ok "DEFUN is now untraced for trace dialog")
+; (:debug 1 1 ("invalid function name: 12312" "   [Condition of type SIMPLE-TYPE-ERROR]" nil)
+(define (swank-trace-dialog:dialog-toggle-trace symbol) '(:ok nil))
+(define (swank-trace-dialog:dialog-untrace symbol) '(:ok nil))
+
+; (:ok (common-lisp:defun))
+(define (swank-trace-dialog:report-specs) '(:ok nil))
+
+; (:ok 0) ; number of recorded traces
+(define (swank-trace-dialog:report-total) '(:ok 0))
+
+; (:ok
+; (((0 nil common-lisp-user::foo nil
+;      (...))
+;   (1 nil common-lisp-user::foo nil
+;      (...)))
+;  0 slime-trace-dialog-fetch-key-83333))
+(define (swank-trace-dialog:report-partial-tree fetch-key))
+
+; (:ok
+;   (:title "#<BIT {2}>" :id 0 :content
+; 	  (("Value: 1 = #x00000001 = #o1 = #b1 = 1.e+0" "\n" "Code-char" ": "
+; 	    (:value "#\\Soh" 1)
+; 	    "\n" "Integer-length" ": "
+; 	    (:value "@0=1" 2)
+; 	    "\n" "Universal-time" ": "
+; 	    (:value "\"1899-12-31T16:00:01-08:00\"" 3)
+; 	    "\n")
+; 	   14 0 500)))
+; swank-trace-dialog:inspect-trace-part 0 0 :retval
+(define (swank-trace-dialog:inspect-trace-part id return-value-index detail))
+
+; (:ok
+;   (5 nil common-lisp-user::foo nil
+;      ((0 "1"))
+;      nil "#<5: FOO>")
+(define (swank-trace-dialog:report-trace-detail id)
+  )
+
+; (:ok nil)
+(define (swank-trace-dialog:clear-trace-tree))
+
+; (:ok nil)
+(define (swank-trace-dialog:dialog-untrace-all))

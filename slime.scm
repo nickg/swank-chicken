@@ -29,7 +29,16 @@
                swank:apropos-list-for-emacs
                swank:set-default-directory
                swank:default-directory
-               swank:init-presentations)
+               swank:init-presentations
+	       swank-trace-dialog:dialog-toggle-trace
+	       swank-trace-dialog:dialog-untrace
+	       swank-trace-dialog:report-specs
+	       swank-trace-dialog:report-total
+	       swank-trace-dialog:report-partial-tree
+	       swank-trace-dialog:inspect-trace-part
+	       swank-trace-dialog:report-trace-detail
+	       swank-trace-dialog:clear-trace-tree
+	       swank-trace-dialog:dialog-untrace-all)
   (import scheme
           chicken irregex)
   (use ports
