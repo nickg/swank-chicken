@@ -629,7 +629,7 @@
 ;   (1 nil common-lisp-user::foo nil
 ;      (...)))
 ;  0 slime-trace-dialog-fetch-key-83333))
-(define (swank-trace-dialog:report-partial-tree fetch-key))
+(define (swank-trace-dialog:report-partial-tree fetch-key) '(:ok nil))
 
 ; (:ok
 ;   (:title "#<BIT {2}>" :id 0 :content
@@ -642,17 +642,17 @@
 ; 	    "\n")
 ; 	   14 0 500)))
 ; swank-trace-dialog:inspect-trace-part 0 0 :retval
-(define (swank-trace-dialog:inspect-trace-part id return-value-index detail))
+(define (swank-trace-dialog:inspect-trace-part id return-value-index detail) '(:ok nil))
 
 ; (:ok
 ;   (5 nil common-lisp-user::foo nil
 ;      ((0 "1"))
 ;      nil "#<5: FOO>")
 (define (swank-trace-dialog:report-trace-detail id)
-  )
+  '(:ok nil))
 
 ; (:ok nil)
-(define (swank-trace-dialog:clear-trace-tree))
+(define (swank-trace-dialog:clear-trace-tree) '(:ok nil))
 
 ; (:ok nil)
-(define (swank-trace-dialog:dialog-untrace-all))
+(define (swank-trace-dialog:dialog-untrace-all) '(:ok nil))
