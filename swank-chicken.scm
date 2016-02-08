@@ -656,3 +656,8 @@
 
 ; (:ok nil)
 (define (swank-trace-dialog:dialog-untrace-all) '(:ok nil))
+
+(define (swank:init-presentations . _) '(:ok nil))
+
+(define (swank-repl:create-repl . _)
+  '(:ok ("CSI" "CSI")))

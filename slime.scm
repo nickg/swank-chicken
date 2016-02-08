@@ -38,7 +38,9 @@
 	       swank-trace-dialog:inspect-trace-part
 	       swank-trace-dialog:report-trace-detail
 	       swank-trace-dialog:clear-trace-tree
-	       swank-trace-dialog:dialog-untrace-all)
+	       swank-trace-dialog:dialog-untrace-all
+               swank:init-presentations
+               swank-repl:create-repl)
   (import scheme
           chicken irregex)
   (use ports
