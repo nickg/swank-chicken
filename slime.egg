@@ -1,0 +1,12 @@
+((license "MIT")
+ (category tools)
+ (dependencies symbol-utils
+               apropos
+               chicken-doc
+               fmt
+               trace)
+ (test-dependencies test)
+ (author "Nick Gasson")
+ (synopsis "SWANK server providing basic SLIME support.")
+ (components (extension slime)
+             (data chicken-slime)))
