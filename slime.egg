@@ -9,4 +9,4 @@
  (author "Nick Gasson")
  (synopsis "SWANK server providing basic SLIME support.")
  (components (extension slime)
-             (data chicken-slime)))
+             (data chicken-slime (files "./chicken-slime.el"))))
