@@ -19,17 +19,24 @@
 ;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ;;; DEALINGS IN THE SOFTWARE.
 ;;;
-(import chicken scheme)
-(require 'tcp)
-(require 'posix)
-(require-extension data-structures
-		   symbol-utils
-                   apropos
-                   chicken-doc
-		   extras
-                   fmt
-                   srfi-14
-		   trace)
+(import scheme
+        (chicken base)
+        (chicken load)
+        (chicken port)
+        (chicken condition)
+        (chicken tcp)
+        (chicken process-context)
+        (chicken process-context posix)
+        (chicken platform)
+        (chicken format)
+        (chicken string)
+        symbol-value-utils
+        apropos
+        chicken-doc
+        fmt
+        srfi-1
+        srfi-14
+        trace)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -56,21 +63,36 @@
           (apply print args)))
       (flush-output normal-port))))
 
+;; Write `sexp' into `out' keeping the accepted format for SLIME.
+(define (write-sexp sexp . out)
+  (let ((port (if (null? out) (current-output-port) (car out))))
+    (cond
+     ((list? sexp)
+      (begin
+        (display "(" port)
+        (for-each (lambda (msg)
+                    (write-sexp msg port)
+                    (display " " port))
+                  sexp)
+        (display ")" port)))
+     ((symbol? sexp) (display sexp port))
+     (else (write sexp port)))))
+
 ;; Send list `msg' as a reply back to SLIME.
 (define (swank-write-packet msg out)
   (let* ((string (with-output-to-string
                    (lambda ()
-                     (write msg))))
+                     (write-sexp msg))))
          (pad-hex (lambda (n)
                     (pad-char #\0 (pad/left 6 (num n 16)))))
          (packet (fmt #f (pad-hex (string-length string)) string)))
-                      
+
     ;; This may be called by code that has set print-length-limit so we
     ;; have to use this kludge to avoid truncating the packet.
     (##sys#with-print-length-limit #f (lambda ()
                                         (debug-print (fmt #f "WRITE " (wrt packet)))
                                         (display packet out)))
-       
+
     (flush-output out)))
 
 ;; Replace Common Lisp-isms such as :foo, nil, and t with (quote foo),
@@ -86,7 +108,7 @@
        ((eq? sym 't)
         #t)
        (else sym))))
-  
+
   (cond
    ((list? sexp)
     (map swank-cleanup sexp))
@@ -124,7 +146,7 @@
                        (else ""))))
          " "
          (dsp (or (vector-ref f 1) ""))))
-  
+
   (define (loop n frames)
     (cond
      ((null? frames) '())
@@ -172,7 +194,7 @@
    void))
 
 ;; Create an input port that reads data by calling back into Emacs.
-(define (swank-input-port in out) 
+(define (swank-input-port in out)
   (let ((buffer #f))
     (define (read-callback)
       (if buffer
@@ -193,7 +215,7 @@
                   #!eof)))))
 
     (define (ready-callback) buffer)
-    
+
     (make-input-port read-callback ready-callback void)))
 
 ;; Evaluate an S-expression and returns a pair (condition . trace) if an
@@ -223,7 +245,7 @@
   (let ((result `(:return (:abort nil) ,id)))
     (dynamic-wind
       void
-      
+
       (lambda ()
         (let ((thing (with-output-to-port (swank-output-port out)
                        (lambda ()
@@ -237,7 +259,7 @@
             (swank-exception in out id (car thing) (cdr thing)))
            (((condition-predicate 'user-interrupt) (car thing))
             (set! result `(:return (:abort user-interrupt) ,id))))))
-           
+
       ;; Output is always written when unwinding the stack to ensure we
       ;; reply to every message e.g. when escaping via continuation to
       ;; the top level after exiting the debugger.
@@ -266,7 +288,7 @@
         (write-port-file port file))
     (dynamic-wind
       (lambda () #f)
-      
+
       (lambda ()
         (call-with-values
             (lambda () (tcp-accept listener))
@@ -281,11 +303,11 @@
                  (cond
                   (((condition-predicate 'user-interrupt) exn)
                    (*swank-top-level* (void)))
-                  (else 
+                  (else
                    (orig-handler exn))))
                (lambda ()
                  (swank-event-loop in out)))))))
-      
+
       (lambda ()
         (tcp-close listener)))))
 
@@ -309,7 +331,7 @@
   `(:ok (:pid ,(current-process-id)
          :package (:name CSI :prompt CSI)
          :encoding (:coding-systems (,swank:coding-system))
-         :lisp-implementation 
+         :lisp-implementation
          (:type "Chicken Scheme" :version ,(chicken-version)))))
 
 ;; For us this call is fairly pointless, but it names the REPL.
@@ -324,7 +346,7 @@
     (let ((form (read)))
       (cond
        ((eof-object? form) '())
-       (else (cons form (get-forms))))))       
+       (else (cons form (get-forms))))))
 
   (with-input-from-string str get-forms))
 
@@ -341,7 +363,6 @@
                                 results))))))
 
 (define swank-repl:listener-eval swank:listener-eval)
-
 ;; "Compile" a string. For us this just means eval and discard the
 ;; results, the behaviour of which might be different to what SLIME
 ;; or the user expected.
@@ -387,9 +408,9 @@
   (*swank-top-level* (void)))
 
 ;; Return the local variables for frame n
-;(:ok (((:name "SB-DEBUG::ARG-0" 
-;            :id 0 :value "(ERROR \"foo\")") 
-;            (:name "SB-DEBUG::ARG-1" :id 0 
+;(:ok (((:name "SB-DEBUG::ARG-0"
+;            :id 0 :value "(ERROR \"foo\")")
+;            (:name "SB-DEBUG::ARG-1" :id 0
 ;            :value "#<NULL-LEXENV>")) nil))
 
 (define (frame-info callframe)
@@ -464,13 +485,13 @@
             (or (find-cursor (car elems))
                 (loop (cdr elems))))))
      (else #f)))
-  
+
   (define (highlight-arg info args)
     (cond
      ((null? info) '())
      ((null? args) info)
      ((not (pair? info))  ; Variable length argument list
-      (list '===> info '<===))  
+      (list '===> info '<===))
      ((eq? (car args) 'swank::%cursor-marker%)
       (append (list '===> (car info) '<===)
               (cdr info)))
@@ -481,7 +502,7 @@
 
   (define (symbol-procedure? sym)
     (handle-exceptions exn #f (procedure? (eval sym))))
-  
+
   (define (info sym)
     (cond
      ((unbound? sym) #f)
@@ -534,7 +555,7 @@
   (let ((comps (filter (lambda (str)
                          (string-prefix? prefix str))
                        (map (lambda (info)
-                              (symbol->string (car info)))
+                              (symbol->string (cdar info)))
                             (apropos-information-list prefix)))))
   `(:ok (,comps ,(if (= (length comps) 1)
                      (car comps)
@@ -560,7 +581,7 @@
       ((method) ':generic-function)
       ;((egg) ':egg)   ; Not visible
       (else ':variable)))
-  
+
   `(:ok ,(map (lambda (node)
                 (list ':designator (fmt #f (node-id node))
                       (slime-node-type node) (node-signature node)))
@@ -568,7 +589,7 @@
 
 
 (define (swank:inspect-frame-var frame index)
-;; an answer seems to be 
+;; an answer seems to be
 ;; (:ok (:id number :title "variable-name"
 ;;       :content (( "type" (:value variable-value id))) begin end length))
 ;; whereas begin and end are used to display a chunk out of a longer list of things
@@ -579,10 +600,10 @@
 	     (name (second var))
 	     (id (fourth var))
 	     (value (sixth var))
-	     (value-len (or 
+	     (value-len (or
 			 (and (list? value) (length value))
 			 1)))
-	    `(:ok (:id 0 
+	    `(:ok (:id 0
 		   :title ,(->string name)
 		   :content (("unknown type? " (:value ,(->string value) 1)) 0 0 ,value-len)))))
 
@@ -596,7 +617,7 @@
   `(:ok ,(current-directory)))
 
 (define (swank:set-default-directory sym)
-  `(:ok ,(current-directory sym)))
+  `(:ok ,(change-directory sym)))
 
 
 ;; Unimplemented.

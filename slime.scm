@@ -42,13 +42,11 @@
                swank:init-presentations
                swank-repl:create-repl)
   (import scheme
-          chicken irregex)
-  (use ports
-       tcp
-       posix
-       srfi-1
-       srfi-13
-       symbol-utils
-       apropos
-       fmt)
+          (chicken base)
+          (chicken irregex)
+          srfi-1
+          srfi-13
+          symbol-utils
+          apropos
+          fmt)
   (include "swank-chicken.scm"))
