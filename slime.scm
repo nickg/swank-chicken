@@ -41,12 +41,23 @@
 	       swank-trace-dialog:dialog-untrace-all
                swank:init-presentations
                swank-repl:create-repl)
-  (import scheme
-          (chicken base)
-          (chicken irregex)
-          srfi-1
-          srfi-13
-          symbol-utils
-          apropos
-          fmt)
-  (include "swank-chicken.scm"))
+(import scheme)
+(cond-expand
+ (chicken-5 (import (chicken base)
+                    (chicken irregex)
+                    srfi-1
+                    srfi-13
+                    symbol-utils
+                    apropos
+                    fmt))
+ (chicken-4 (import chicken irregex)
+            (use ports
+                 tcp
+                 posix
+                 srfi-1
+                 srfi-13
+                 symbol-utils
+                 apropos
+                 fmt))
+ (else (error "Unsupported CHICKEN version.")))
+(include "swank-chicken.scm"))

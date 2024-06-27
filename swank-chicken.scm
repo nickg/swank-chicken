@@ -19,24 +19,37 @@
 ;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 ;;; DEALINGS IN THE SOFTWARE.
 ;;;
-(import scheme
-        (chicken base)
-        (chicken load)
-        (chicken port)
-        (chicken condition)
-        (chicken tcp)
-        (chicken process-context)
-        (chicken process-context posix)
-        (chicken platform)
-        (chicken format)
-        (chicken string)
-        symbol-value-utils
-        apropos
-        chicken-doc
-        fmt
-        srfi-1
-        srfi-14
-        trace)
+(cond-expand
+ (chicken-5 (import scheme
+                    (chicken base)
+                    (chicken load)
+                    (chicken port)
+                    (chicken condition)
+                    (chicken tcp)
+                    (chicken process-context)
+                    (chicken process-context posix)
+                    (chicken platform)
+                    (chicken format)
+                    (chicken string)
+                    symbol-value-utils
+                    apropos
+                    chicken-doc
+                    fmt
+                    srfi-1
+                    srfi-14
+                    trace))
+ (chicken-4 (import chicken scheme)
+       (require 'tcp)
+       (require 'posix)
+       (require-extension data-structures
+		          symbol-utils
+                          apropos
+                          chicken-doc
+		          extras
+                          fmt
+                          srfi-14
+		          trace))
+ (else (error "Unsupported CHICKEN version.")))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -63,20 +76,22 @@
           (apply print args)))
       (flush-output normal-port))))
 
-;; Write `sexp' into `out' keeping the accepted format for SLIME.
-(define (write-sexp sexp . out)
-  (let ((port (if (null? out) (current-output-port) (car out))))
-    (cond
-     ((list? sexp)
-      (begin
-        (display "(" port)
-        (for-each (lambda (msg)
-                    (write-sexp msg port)
-                    (display " " port))
-                  sexp)
-        (display ")" port)))
-     ((symbol? sexp) (display sexp port))
-     (else (write sexp port)))))
+(cond-expand
+ ;; Write `sexp' into `out' keeping the accepted format for SLIME.
+ (chicken-5 (define (write-sexp sexp . out)
+              (let ((port (if (null? out) (current-output-port) (car out))))
+                (cond
+                 ((list? sexp)
+                  (begin
+                    (display "(" port)
+                    (for-each (lambda (msg)
+                                (write-sexp msg port)
+                                (display " " port))
+                              sexp)
+                    (display ")" port)))
+                 ((symbol? sexp) (display sexp port))
+                 (else (write sexp port))))))
+ (else (define write-sexp write)))
 
 ;; Send list `msg' as a reply back to SLIME.
 (define (swank-write-packet msg out)
@@ -555,6 +570,7 @@
   (let ((comps (filter (lambda (str)
                          (string-prefix? prefix str))
                        (map (lambda (info)
+                              ;; Check if `apropos-information-list` returns the same
                               (symbol->string (cdar info)))
                             (apropos-information-list prefix)))))
   `(:ok (,comps ,(if (= (length comps) 1)
@@ -617,7 +633,9 @@
   `(:ok ,(current-directory)))
 
 (define (swank:set-default-directory sym)
-  `(:ok ,(change-directory sym)))
+  (cond-expand
+   (chicken-5 `(:ok ,(change-directory sym)))
+   (else `(:ok ,(current-directory sym)))))
 
 
 ;; Unimplemented.
