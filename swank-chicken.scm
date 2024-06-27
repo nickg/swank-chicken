@@ -570,7 +570,6 @@
   (let ((comps (filter (lambda (str)
                          (string-prefix? prefix str))
                        (map (lambda (info)
-                              ;; Check if `apropos-information-list` returns the same
                               (symbol->string (cdar info)))
                             (apropos-information-list prefix)))))
   `(:ok (,comps ,(if (= (length comps) 1)
